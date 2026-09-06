@@ -1,0 +1,52 @@
+# Python bytecode & cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual Environments
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+
+# Downloaded media & temporary download files
+downloads/*
+!downloads/.gitkeep
+*.mp3
+*.m4a
+*.webm
+*.opus
+*.mp4
+*.mkv
+*.part
+*.ytdl
+*.temp
+
+# Environment variables & secrets
+.env
+.env.*
+!.env.example
+cookies.txt
+*.cookies
+
+# Logs
+*.log
+
+# Editor & IDE directories
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Operating System files
+.DS_Store
+Thumbs.db

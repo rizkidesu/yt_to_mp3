@@ -1,0 +1,108 @@
+/* Custom CSS for YouTube to MP3 Studio */
+
+/* Active Tab Styles */
+.nav-tab {
+  color: #94a3b8;
+  border-bottom-color: transparent;
+}
+.nav-tab:hover {
+  color: #f1f5f9;
+}
+.active-tab {
+  color: #ef4444 !important;
+  border-bottom-color: #ef4444 !important;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0b0f19;
+}
+::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
+/* Custom range input styling */
+input[type="range"]::-webkit-slider-thumb {
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #ef4444;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+input[type="range"]::-webkit-slider-thumb:hover {
+  transform: scale(1.25);
+}
+
+/* Animated Sound Wave for playing item */
+.sound-wave {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 14px;
+}
+.sound-wave span {
+  width: 2.5px;
+  background-color: #ef4444;
+  border-radius: 1px;
+  animation: bounce 1.2s infinite ease-in-out;
+}
+.sound-wave span:nth-child(1) { animation-delay: 0.1s; height: 40%; }
+.sound-wave span:nth-child(2) { animation-delay: 0.3s; height: 90%; }
+.sound-wave span:nth-child(3) { animation-delay: 0.2s; height: 60%; }
+.sound-wave span:nth-child(4) { animation-delay: 0.4s; height: 100%; }
+
+@keyframes bounce {
+  0%, 100% {
+    transform: scaleY(0.3);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+/* Vertical Equalizer Slider */
+input[type="range"].eq-slider {
+  writing-mode: vertical-lr;
+  direction: rtl;
+  -webkit-appearance: slider-vertical;
+  appearance: slider-vertical;
+  width: 22px;
+  height: 110px;
+  background: #1f2937;
+  border-radius: 8px;
+  cursor: pointer;
+  outline: none;
+}
+input[type="range"].eq-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #ef4444;
+  border: 2px solid #ffffff;
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.7);
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+input[type="range"].eq-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+input[type="range"].eq-slider::-moz-range-thumb {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #ef4444;
+  border: 2px solid #ffffff;
+  box-shadow: 0 0 8px rgba(239, 68, 68, 0.7);
+  cursor: pointer;
+}

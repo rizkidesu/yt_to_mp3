@@ -1,0 +1,18 @@
+services:
+  downloader:
+    build: .
+    image: yt-mp3-downloader:latest
+    container_name: youtube_mp3_container
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    volumes:
+      # Mapping folder output download
+      - ./downloads:/app/downloads
+      # Mapping file daftar URL agar sinkron dengan komputer lokal
+      - ./urls.txt:/app/urls.txt
+      # Mapping file script apps.py agar perubahan kode langsung aktif
+      - ./apps.py:/app/apps.py
+      # Mapping templates & static agar perubahan tampilan langsung aktif tanpa rebuild
+      - ./templates:/app/templates
+      - ./static:/app/static

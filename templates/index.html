@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="id" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YouTube to MP3 Studio</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="/static/style.css">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#fef2f2',
+              500: '#ef4444',
+              600: '#dc2626',
+              700: '#b91c1c',
+            },
+            dark: {
+              900: '#0b0f19',
+              850: '#111827',
+              800: '#1f2937',
+              750: '#253142',
+              700: '#374151',
+            }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-dark-900 text-slate-100 min-h-screen flex flex-col font-sans pb-28">
+
+  <!-- Header & Navbar -->
+  <header class="sticky top-0 z-40 bg-dark-850/90 backdrop-blur-md border-b border-slate-800 shadow-lg">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <!-- Logo -->
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-700 to-brand-500 flex items-center justify-center shadow-lg shadow-brand-500/20">
+          <i class="fa-brands fa-youtube text-white text-2xl"></i>
+        </div>
+        <div>
+          <h1 class="text-lg font-bold tracking-tight text-white flex items-center gap-2">
+            YT to MP3 <span class="text-xs px-2 py-0.5 rounded-full bg-brand-500/20 text-brand-500 font-semibold border border-brand-500/30">Studio</span>
+          </h1>
+          <p class="text-xs text-slate-400">Pengunduh Audio YouTube Cepat & Berkualitas</p>
+        </div>
+      </div>
+
+      <!-- Quick Stats / Server Info -->
+      <div class="flex items-center gap-3">
+        <div class="hidden sm:flex items-center gap-2 bg-dark-800 border border-slate-700/60 rounded-lg px-3 py-1.5 text-xs text-slate-300">
+          <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span>Status: <strong class="text-emerald-400 font-medium">Aktif</strong></span>
+        </div>
+        <div class="flex items-center gap-2 bg-dark-800 border border-slate-700/60 rounded-lg px-3 py-1.5 text-xs text-slate-300">
+          <i class="fa-solid fa-hard-drive text-slate-400"></i>
+          <span>Penyimpanan: <strong id="header-storage-size" class="text-white font-medium">0 MB</strong></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex space-x-1 border-t border-slate-800/80 overflow-x-auto">
+      <button onclick="switchTab('download')" id="tab-btn-download" class="nav-tab active-tab flex items-center gap-2 py-3 px-4 text-sm font-medium border-b-2 transition">
+        <i class="fa-solid fa-cloud-arrow-down"></i> Unduh Lagu
+      </button>
+      <button onclick="switchTab('tasks')" id="tab-btn-tasks" class="nav-tab flex items-center gap-2 py-3 px-4 text-sm font-medium border-b-2 transition relative">
+        <i class="fa-solid fa-bars-progress"></i> Antrean & Progres
+        <span id="active-tasks-badge" class="hidden ml-1 px-1.5 py-0.2 text-[11px] font-bold rounded-full bg-brand-600 text-white animate-bounce">0</span>
+      </button>
+      <button onclick="switchTab('library')" id="tab-btn-library" class="nav-tab flex items-center gap-2 py-3 px-4 text-sm font-medium border-b-2 transition">
+        <i class="fa-solid fa-music"></i> Koleksi Musik
+        <span id="library-count-badge" class="ml-1 px-2 py-0.5 text-xs rounded-full bg-slate-800 text-slate-300">0</span>
+      </button>
+      <button onclick="switchTab('urls')" id="tab-btn-urls" class="nav-tab flex items-center gap-2 py-3 px-4 text-sm font-medium border-b-2 transition">
+        <i class="fa-solid fa-file-lines"></i> Kelola urls.txt
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full">
+
+    <!-- ================= TAB 1: DOWNLOAD ================= -->
+    <section id="tab-download" class="tab-content block space-y-6">
+      <!-- Mode Selector -->
+      <div class="flex items-center justify-between bg-dark-850 p-2 rounded-xl border border-slate-800 max-w-md mx-auto shadow-sm">
+        <button id="mode-btn-single" onclick="setDownloadMode('single')" class="flex-1 py-2 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition bg-brand-600 text-white shadow">
+          <i class="fa-solid fa-link"></i> Satu Lagu
+        </button>
+        <button id="mode-btn-batch" onclick="setDownloadMode('batch')" class="flex-1 py-2 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition text-slate-400 hover:text-slate-200">
+          <i class="fa-solid fa-layer-group"></i> Banyak Lagu (Batch)
+        </button>
+      </div>
+
+      <!-- Single Download Box -->
+      <div id="single-download-box" class="max-w-2xl mx-auto bg-dark-850 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-5">
+        <div>
+          <label class="block text-sm font-medium text-slate-300 mb-2">Masukkan URL Video YouTube</label>
+          <div class="relative flex items-center">
+            <input type="url" id="single-url-input" placeholder="https://www.youtube.com/watch?v=... atau https://youtu.be/..." 
+              class="w-full bg-dark-900 border border-slate-700 rounded-xl px-4 py-3.5 pr-24 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition">
+            <button onclick="pasteToSingleInput()" title="Tempel dari Clipboard" class="absolute right-2 px-3 py-1.5 text-xs rounded-lg bg-dark-800 hover:bg-dark-750 text-slate-300 border border-slate-700 transition flex items-center gap-1.5">
+              <i class="fa-regular fa-paste"></i> Tempel
+            </button>
+          </div>
+        </div>
+
+        <!-- Video Metadata Preview (Dynamic) -->
+        <div id="video-preview-card" class="hidden bg-dark-900 border border-slate-750 rounded-xl p-3.5 flex gap-4 items-center">
+          <div class="relative w-24 h-16 rounded-lg overflow-hidden border border-slate-700 bg-slate-800 shrink-0 flex items-center justify-center">
+            <div id="preview-thumb-loader" class="absolute inset-0 flex items-center justify-center bg-slate-800 text-slate-500">
+              <i class="fa-solid fa-spinner fa-spin text-brand-500 text-sm"></i>
+            </div>
+            <img id="preview-thumb" src="" alt="" referrerpolicy="no-referrer" 
+              class="w-full h-full object-cover hidden"
+              onload="document.getElementById('preview-thumb-loader').classList.add('hidden'); this.classList.remove('hidden');"
+              onerror="this.classList.add('hidden'); document.getElementById('preview-thumb-loader').classList.remove('hidden');">
+          </div>
+          <div class="flex-1 min-w-0">
+            <p id="preview-title" class="text-sm font-semibold text-slate-100 truncate">Memeriksa video...</p>
+            <p id="preview-uploader" class="text-xs text-slate-400 truncate mt-0.5">Memuat channel...</p>
+            <div class="flex items-center gap-3 mt-1.5 text-xs text-slate-400">
+              <span><i class="fa-regular fa-clock mr-1 text-slate-500"></i><span id="preview-duration">--:--</span></span>
+              <span id="preview-type" class="px-2 py-0.5 rounded bg-brand-500/10 text-brand-400 text-[10px] font-medium border border-brand-500/20">Video</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quality Selector -->
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-2">Kualitas Audio (Bitrate MP3):</label>
+          <div class="grid grid-cols-4 gap-2">
+            <label class="cursor-pointer">
+              <input type="radio" name="quality-single" value="320" class="peer sr-only">
+              <div class="peer-checked:border-brand-500 peer-checked:bg-brand-500/10 peer-checked:text-brand-400 border border-slate-750 bg-dark-900 p-2.5 rounded-xl text-center transition hover:border-slate-600">
+                <span class="block text-sm font-bold">320 kbps</span>
+                <span class="block text-[10px] text-slate-400">Ultra HQ</span>
+              </div>
+            </label>
+            <label class="cursor-pointer">
+              <input type="radio" name="quality-single" value="256" class="peer sr-only">
+              <div class="peer-checked:border-brand-500 peer-checked:bg-brand-500/10 peer-checked:text-brand-400 border border-slate-750 bg-dark-900 p-2.5 rounded-xl text-center transition hover:border-slate-600">
+                <span class="block text-sm font-bold">256 kbps</span>
+                <span class="block text-[10px] text-slate-400">High Quality</span>
+              </div>
+            </label>
+            <label class="cursor-pointer">
+              <input type="radio" name="quality-single" value="192" class="peer sr-only" checked>
+              <div class="peer-checked:border-brand-500 peer-checked:bg-brand-500/10 peer-checked:text-brand-400 border border-slate-750 bg-dark-900 p-2.5 rounded-xl text-center transition hover:border-slate-600">
+                <span class="block text-sm font-bold">192 kbps</span>
+                <span class="block text-[10px] text-slate-400">Standar HQ</span>
+              </div>
+            </label>
+            <label class="cursor-pointer">
+              <input type="radio" name="quality-single" value="128" class="peer sr-only">
+              <div class="peer-checked:border-brand-500 peer-checked:bg-brand-500/10 peer-checked:text-brand-400 border border-slate-750 bg-dark-900 p-2.5 rounded-xl text-center transition hover:border-slate-600">
+                <span class="block text-sm font-bold">128 kbps</span>
+                <span class="block text-[10px] text-slate-400">Hemat Kuota</span>
+              </div>
+            </label>
+          </div>
+        </div>
+
+        <button onclick="startSingleDownload()" id="btn-submit-single" class="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-brand-600 to-brand-700 hover:from-brand-500 hover:to-brand-600 text-white font-semibold text-sm shadow-lg shadow-brand-600/30 transition flex items-center justify-center gap-2">
+          <i class="fa-solid fa-download"></i> Unduh Audio Sekarang
+        </button>
+      </div>
+
+      <!-- Batch Download Box -->
+      <div id="batch-download-box" class="hidden max-w-3xl mx-auto bg-dark-850 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-5">
+        <div class="flex items-center justify-between">
+          <label class="block text-sm font-medium text-slate-300">Daftar URL YouTube (Satu URL per baris)</label>
+          <div class="flex items-center gap-2">
+            <input type="file" id="batch-file-input" accept=".txt,text/plain" class="hidden" onchange="handleTxtUpload(event)">
+            <button type="button" onclick="document.getElementById('batch-file-input').click()" class="text-xs px-3 py-1.5 rounded-lg bg-dark-800 hover:bg-dark-750 text-emerald-400 border border-emerald-500/30 transition flex items-center gap-1.5 font-medium" title="Upload file .txt">
+              <i class="fa-solid fa-file-arrow-up"></i> Upload .txt
+            </button>
+            <button type="button" onclick="importFromUrlsTxt()" class="text-xs px-3 py-1.5 rounded-lg bg-dark-800 hover:bg-dark-750 text-brand-400 border border-brand-500/30 transition flex items-center gap-1.5 font-medium">
+              <i class="fa-solid fa-file-import"></i> Impor dari urls.txt
+            </button>
+            <button type="button" onclick="clearBatchTextarea()" class="text-xs px-3 py-1.5 rounded-lg bg-dark-800 hover:bg-dark-750 text-slate-400 hover:text-slate-200 border border-slate-700 transition">
+              <i class="fa-solid fa-eraser mr-1"></i> Bersihkan
+            </button>
+          </div>
+        </div>
+
+        <textarea id="batch-urls-input" rows="8" placeholder="https://youtu.be/64li6xGC2rI&#10;https://youtu.be/1S-JIWZyrOI&#10;https://youtu.be/JoJcWAjfZfI" 
+          class="w-full bg-dark-900 border border-slate-700 rounded-xl p-4 text-xs font-mono text-slate-200 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition"></textarea>
+
+        <div class="flex flex-wrap items-center justify-between gap-4">
+          <div class="text-xs text-slate-400">
+            Terdeteksi: <strong id="batch-count" class="text-brand-400 font-bold text-sm">0</strong> URL valid
+          </div>
+
+          <!-- Quality Selector -->
+          <div class="flex items-center gap-2">
+            <span class="text-xs text-slate-400">Kualitas:</span>
+            <select id="quality-batch" class="bg-dark-900 border border-slate-700 text-xs text-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:border-brand-500">
+              <option value="320">320 kbps (Ultra HQ)</option>
+              <option value="256">256 kbps (HQ)</option>
+              <option value="192" selected>192 kbps (Standar HQ)</option>
+              <option value="128">128 kbps (Hemat)</option>
+            </select>
+          </div>
+        </div>
+
+        <button onclick="startBatchDownload()" id="btn-submit-batch" class="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-brand-600 to-brand-700 hover:from-brand-500 hover:to-brand-600 text-white font-semibold text-sm shadow-lg shadow-brand-600/30 transition flex items-center justify-center gap-2">
+          <i class="fa-solid fa-layer-group"></i> Mulai Download Batch Semua Lagu
+        </button>
+      </div>
+    </section>
+
+    <!-- ================= TAB 2: TASKS & QUEUE ================= -->
+    <section id="tab-tasks" class="tab-content hidden space-y-4">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-lg font-bold text-slate-100 flex items-center gap-2">
+            <i class="fa-solid fa-list-check text-brand-500"></i> Antrean & Status Download
+          </h2>
+          <p class="text-xs text-slate-400">Pantau proses pengunduhan dan ekstraksi FFmpeg secara realtime</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="clearFinishedTasks()" class="px-3 py-1.5 text-xs rounded-lg bg-dark-800 hover:bg-dark-750 text-slate-300 border border-slate-700 transition flex items-center gap-1.5">
+            <i class="fa-solid fa-trash-can text-slate-400"></i> Hapus Riwayat Selesai
+          </button>
+          <button onclick="fetchTasks()" class="px-3 py-1.5 text-xs rounded-lg bg-dark-800 hover:bg-dark-750 text-slate-300 border border-slate-700 transition flex items-center gap-1.5">
+            <i class="fa-solid fa-rotate text-slate-400"></i> Segarkan
+          </button>
+        </div>
+      </div>
+
+      <!-- Tasks List Container -->
+      <div id="tasks-container" class="space-y-3">
+        <!-- Dynamic task cards will be rendered here -->
+      </div>
+
+      <!-- Empty State -->
+      <div id="tasks-empty-state" class="hidden text-center py-16 bg-dark-850 rounded-2xl border border-slate-800">
+        <i class="fa-solid fa-inbox text-slate-600 text-5xl mb-3"></i>
+        <h3 class="text-sm font-semibold text-slate-300">Belum Ada Antrean Download</h3>
+        <p class="text-xs text-slate-500 mt-1 max-w-sm mx-auto">Silakan masukkan URL di tab "Unduh Lagu" untuk memulai proses unduh otomatis.</p>
+        <button onclick="switchTab('download')" class="mt-4 px-4 py-2 text-xs font-semibold rounded-xl bg-brand-600 hover:bg-brand-500 text-white transition">
+          Mulai Unduh
+        </button>
+      </div>
+    </section>
+
+    <!-- ================= TAB 3: LIBRARY ================= -->
+    <section id="tab-library" class="tab-content hidden space-y-4">
+      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div>
+          <h2 class="text-lg font-bold text-slate-100 flex items-center gap-2">
+            <i class="fa-solid fa-compact-disc text-brand-500"></i> Koleksi Musik Hasil Unduhan
+          </h2>
+          <p class="text-xs text-slate-400">Dengarkan langsung di web atau unduh ke perangkat Anda</p>
+        </div>
+        <div class="flex items-center gap-2 flex-wrap">
+          
+          <a href="/api/files/download-zip" class="px-3 py-2 text-xs rounded-xl bg-dark-800 hover:bg-dark-750 text-slate-300 border border-slate-700 transition flex items-center gap-1.5" title="Download seluruh koleksi musik dalam format .ZIP">
+            <i class="fa-solid fa-cloud-arrow-down text-emerald-400"></i> Download Semua (.ZIP)
+          </a>
+          <button onclick="fetchLibraryFiles()" class="px-3 py-2 text-xs rounded-xl bg-dark-800 hover:bg-dark-750 text-slate-300 border border-slate-700 transition flex items-center gap-1.5">
+            <i class="fa-solid fa-rotate text-slate-400"></i> Segarkan
+          </button>
+        </div>
+      </div>
+
+      <!-- Search & Filter -->
+      <div class="relative">
+        <input type="text" id="library-search-input" oninput="filterLibraryFiles()" placeholder="Cari judul lagu atau nama file..." 
+          class="w-full bg-dark-850 border border-slate-750 rounded-xl px-4 py-2.5 pl-10 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-brand-500">
+        <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3.5 text-slate-500 text-sm"></i>
+      </div>
+
+      <!-- Bulk Selection & Action Toolbar -->
+      <div id="library-batch-actions" class="flex flex-wrap items-center justify-between gap-3 bg-dark-850 border border-slate-800 rounded-xl px-4 py-2.5 text-xs">
+        <div class="flex items-center gap-3">
+          <label class="flex items-center gap-2 cursor-pointer select-none text-slate-300 hover:text-white font-medium">
+            <input type="checkbox" id="select-all-library" onchange="toggleSelectAllLibrary(this.checked)" class="w-4 h-4 rounded bg-dark-900 border-slate-700 text-brand-600 focus:ring-brand-500 focus:ring-offset-0 cursor-pointer">
+            <span>Pilih Semua</span>
+          </label>
+          <span class="text-slate-700">|</span>
+          <span class="text-slate-400">
+            <span id="selected-files-count" class="font-bold text-brand-400">0</span> lagu dipilih
+          </span>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button id="btn-download-selected" onclick="downloadSelectedZip()" disabled 
+            class="px-3.5 py-1.5 rounded-lg bg-emerald-600/20 text-emerald-400/40 cursor-not-allowed font-medium transition flex items-center gap-1.5">
+            <i class="fa-solid fa-file-zipper"></i> Download Terpilih (<span id="btn-download-count">0</span>)
+          </button>
+          <button id="btn-delete-selected" onclick="deleteSelectedFiles()" disabled 
+            class="px-3.5 py-1.5 rounded-lg bg-red-600/20 text-red-400/40 cursor-not-allowed font-medium transition flex items-center gap-1.5">
+            <i class="fa-solid fa-trash-can"></i> Hapus Terpilih (<span id="btn-delete-count">0</span>)
+          </button>
+        </div>
+      </div>
+
+      <!-- Library List Grid -->
+      <div id="library-container" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <!-- Dynamic music items -->
+      </div>
+
+      <!-- Empty State -->
+      <div id="library-empty-state" class="hidden text-center py-16 bg-dark-850 rounded-2xl border border-slate-800">
+        <i class="fa-solid fa-music-slash text-slate-600 text-5xl mb-3"></i>
+        <h3 class="text-sm font-semibold text-slate-300">Belum Ada File MP3</h3>
+        <p class="text-xs text-slate-500 mt-1 max-w-sm mx-auto">File hasil unduhan akan tersimpan dan tampil di sini.</p>
+      </div>
+    </section>
+
+    <!-- ================= TAB 4: URLS.TXT EDITOR ================= -->
+    <section id="tab-urls" class="tab-content hidden space-y-4">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-lg font-bold text-slate-100 flex items-center gap-2">
+            <i class="fa-solid fa-file-lines text-brand-500"></i> Kelola File urls.txt
+          </h2>
+          <p class="text-xs text-slate-400">Edit daftar URL yang tersimpan di server secara langsung</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="downloadAllFromUrlsTxtEditor()" class="px-3.5 py-2 text-xs font-semibold rounded-xl bg-brand-600 hover:bg-brand-500 text-white transition flex items-center gap-2">
+            <i class="fa-solid fa-cloud-arrow-down"></i> Unduh Semua Baris Ini
+          </button>
+          <button onclick="saveUrlsTxt()" class="px-3.5 py-2 text-xs font-semibold rounded-xl bg-blue-600 hover:bg-blue-500 text-white transition flex items-center gap-2">
+            <i class="fa-solid fa-floppy-disk"></i> Simpan File
+          </button>
+        </div>
+      </div>
+
+      <div class="bg-dark-850 border border-slate-800 rounded-2xl p-4">
+        <textarea id="editor-urls-content" rows="18" class="w-full bg-dark-900 border border-slate-750 rounded-xl p-4 text-xs font-mono text-slate-200 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-brand-500" placeholder="# Masukkan URL YouTube di sini..."></textarea>
+      </div>
+    </section>
+  </main>
+
+  <!-- ================= STICKY AUDIO PLAYER BAR ================= -->
+  <div id="global-player-bar" class="fixed bottom-0 left-0 right-0 z-50 bg-dark-850/95 backdrop-blur-lg border-t border-slate-800 shadow-2xl transition-transform duration-300 translate-y-0">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-col md:flex-row items-center justify-between gap-3">
+      
+      <!-- Track Details -->
+      <div class="flex items-center gap-3 w-full md:w-1/3 min-w-0">
+        <div class="w-11 h-11 rounded-xl bg-gradient-to-tr from-brand-600 to-amber-500 flex items-center justify-center shrink-0 shadow">
+          <i class="fa-solid fa-music text-white text-base"></i>
+        </div>
+        <div class="min-w-0 flex-1">
+          <p id="player-track-name" class="text-xs font-semibold text-slate-100 truncate">Pilih lagu untuk diputar</p>
+          <p id="player-track-time" class="text-[11px] text-slate-400 font-mono mt-0.5">00:00 / 00:00</p>
+        </div>
+      </div>
+
+      <!-- Controls & Progress Bar -->
+      <div class="flex flex-col items-center w-full md:w-1/2 space-y-1.5">
+        <!-- Buttons -->
+        <div class="flex items-center gap-4">
+          <button onclick="playPrevTrack()" title="Sebelumnya" class="text-slate-400 hover:text-white text-sm transition">
+            <i class="fa-solid fa-backward-step"></i>
+          </button>
+          <button onclick="togglePlayPause()" id="player-play-btn" title="Putar/Jeda" class="w-9 h-9 rounded-full bg-white hover:bg-slate-200 text-dark-900 flex items-center justify-center text-sm shadow transition">
+            <i class="fa-solid fa-play ml-0.5"></i>
+          </button>
+          <button onclick="playNextTrack()" title="Selanjutnya" class="text-slate-400 hover:text-white text-sm transition">
+            <i class="fa-solid fa-forward-step"></i>
+          </button>
+          <!-- Mobile Equalizer Button -->
+          <button onclick="toggleEqualizerModal()" title="Audio Equalizer" class="md:hidden text-slate-400 hover:text-brand-400 text-sm transition p-1">
+            <i class="fa-solid fa-sliders"></i>
+          </button>
+        </div>
+
+        <!-- Scrub Seekbar -->
+        <div class="w-full flex items-center gap-2">
+          <span id="player-current-time" class="text-[10px] text-slate-400 font-mono w-8 text-right">0:00</span>
+          <input type="range" id="player-seek-slider" min="0" max="100" value="0" step="0.1" 
+            class="w-full h-1.5 bg-dark-750 rounded-lg appearance-none cursor-pointer accent-brand-500">
+          <span id="player-total-duration" class="text-[10px] text-slate-400 font-mono w-8">0:00</span>
+        </div>
+      </div>
+
+      <!-- Volume, Equalizer & Direct Download -->
+      <div class="hidden md:flex items-center justify-end gap-2.5 w-1/3">
+        <!-- Desktop Equalizer Button -->
+        <button onclick="toggleEqualizerModal()" id="player-eq-btn" title="Buka Equalizer" class="px-2.5 py-1.5 rounded-lg bg-dark-800 hover:bg-dark-750 text-slate-400 hover:text-brand-400 border border-slate-700 transition flex items-center gap-1.5 text-xs font-medium">
+          <i class="fa-solid fa-sliders text-xs"></i>
+          <span class="text-[11px]">EQ</span>
+        </button>
+
+        <button onclick="toggleMute()" id="player-mute-btn" class="text-slate-400 hover:text-white text-sm transition">
+          <i class="fa-solid fa-volume-high"></i>
+        </button>
+        <input type="range" id="player-volume-slider" min="0" max="1" step="0.05" value="0.8" 
+          class="w-20 h-1.5 bg-dark-750 rounded-lg appearance-none cursor-pointer accent-brand-500">
+        <a id="player-download-btn" href="#" download class="px-3 py-1.5 rounded-lg bg-dark-800 hover:bg-dark-750 border border-slate-700 text-xs text-slate-300 hover:text-white transition flex items-center gap-1.5 ml-1">
+          <i class="fa-solid fa-download"></i> Unduh File
+        </a>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ================= AUDIO EQUALIZER MODAL ================= -->
+  <div id="equalizer-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm hidden transition-opacity duration-200" onclick="closeEqualizerModal()">
+    <div class="bg-dark-850 border border-slate-750 rounded-2xl p-5 sm:p-6 w-full max-w-lg shadow-2xl relative space-y-4" onclick="event.stopPropagation()">
+      
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-brand-600/20 border border-brand-500/30 flex items-center justify-center text-brand-400">
+            <i class="fa-solid fa-sliders text-base"></i>
+          </div>
+          <div>
+            <h3 class="text-sm sm:text-base font-bold text-slate-100 flex items-center gap-2">
+              Audio Equalizer
+              <span id="eq-active-badge" class="text-[10px] px-2 py-0.5 rounded-full bg-brand-500/20 text-brand-400 font-semibold border border-brand-500/30">Aktif</span>
+            </h3>
+            <p class="text-[11px] text-slate-400">Atur frekuensi nada & kualitas audio sesuai selera Anda</p>
+          </div>
+        </div>
+        
+        <div class="flex items-center gap-3">
+          <!-- Power On/Off Toggle -->
+          <label class="relative inline-flex items-center cursor-pointer select-none" title="Aktifkan / Bypass Equalizer">
+            <input type="checkbox" id="eq-power-toggle" checked onchange="toggleEqualizerPower(this.checked)" class="sr-only peer">
+            <div class="w-9 h-5 bg-dark-750 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-brand-600"></div>
+            <span id="eq-power-status" class="ml-2 text-xs font-semibold text-brand-400">ON</span>
+          </label>
+          
+          <button onclick="closeEqualizerModal()" class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-dark-800 transition">
+            <i class="fa-solid fa-xmark text-base"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Presets & Reset Bar -->
+      <div class="flex items-center justify-between gap-3">
+        <div class="flex items-center gap-2 flex-1">
+          <span class="text-xs text-slate-400 shrink-0"><i class="fa-solid fa-wand-magic-sparkles mr-1 text-brand-400"></i>Preset:</span>
+          <select id="eq-preset-select" onchange="applyEqualizerPreset(this.value)" 
+            class="w-full bg-dark-900 border border-slate-750 rounded-xl px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-brand-500 cursor-pointer">
+            <option value="flat">Datar (Flat)</option>
+            <option value="dangdut">Dangdut / Kendang Mantap 🔥</option>
+            <option value="bass">Bass Boost 🔊</option>
+            <option value="vocal">Vocal Booster 🎤</option>
+            <option value="rock">Rock 🎸</option>
+            <option value="pop">Pop 🎧</option>
+            <option value="electronic">Electronic / EDM ⚡</option>
+            <option value="jazz">Jazz 🎷</option>
+            <option value="acoustic">Akustik 🎶</option>
+            <option value="treble">Treble Boost ✨</option>
+            <option value="custom">Kustom (Manual)</option>
+          </select>
+        </div>
+        <button onclick="resetEqualizer()" class="text-xs px-3 py-1.5 rounded-xl bg-dark-800 hover:bg-dark-750 text-slate-300 border border-slate-750 hover:text-white transition shrink-0 flex items-center gap-1.5">
+          <i class="fa-solid fa-rotate-left"></i> Reset
+        </button>
+      </div>
+
+      <!-- Equalizer 6-Band Sliders -->
+      <div class="bg-dark-900 border border-slate-800 rounded-xl p-4">
+        <div class="grid grid-cols-6 gap-2 sm:gap-3 items-end h-44 pb-1">
+          
+          <!-- Band 0: 60Hz -->
+          <div class="flex flex-col items-center h-full justify-between">
+            <span class="text-[10px] font-mono text-slate-400" id="gain-val-0">0dB</span>
+            <div class="h-28 flex items-center justify-center">
+              <input type="range" id="eq-slider-0" min="-12" max="12" step="0.5" value="0" orient="vertical"
+                class="eq-slider" oninput="onEqSliderChange(0, this.value)">
+            </div>
+            <div class="text-center mt-1">
+              <span class="block text-[11px] font-bold text-slate-300">60Hz</span>
+              <span class="block text-[9px] text-slate-500">Sub</span>
+            </div>
+          </div>
+
+          <!-- Band 1: 170Hz -->
+          <div class="flex flex-col items-center h-full justify-between">
+            <span class="text-[10px] font-mono text-slate-400" id="gain-val-1">0dB</span>
+            <div class="h-28 flex items-center justify-center">
+              <input type="range" id="eq-slider-1" min="-12" max="12" step="0.5" value="0" orient="vertical"
+                class="eq-slider" oninput="onEqSliderChange(1, this.value)">
+            </div>
+            <div class="text-center mt-1">
+              <span class="block text-[11px] font-bold text-slate-300">170Hz</span>
+              <span class="block text-[9px] text-slate-500">Bass</span>
+            </div>
+          </div>
+
+          <!-- Band 2: 350Hz -->
+          <div class="flex flex-col items-center h-full justify-between">
+            <span class="text-[10px] font-mono text-slate-400" id="gain-val-2">0dB</span>
+            <div class="h-28 flex items-center justify-center">
+              <input type="range" id="eq-slider-2" min="-12" max="12" step="0.5" value="0" orient="vertical"
+                class="eq-slider" oninput="onEqSliderChange(2, this.value)">
+            </div>
+            <div class="text-center mt-1">
+              <span class="block text-[11px] font-bold text-slate-300">350Hz</span>
+              <span class="block text-[9px] text-slate-500">Low-Mid</span>
+            </div>
+          </div>
+
+          <!-- Band 3: 1kHz -->
+          <div class="flex flex-col items-center h-full justify-between">
+            <span class="text-[10px] font-mono text-slate-400" id="gain-val-3">0dB</span>
+            <div class="h-28 flex items-center justify-center">
+              <input type="range" id="eq-slider-3" min="-12" max="12" step="0.5" value="0" orient="vertical"
+                class="eq-slider" oninput="onEqSliderChange(3, this.value)">
+            </div>
+            <div class="text-center mt-1">
+              <span class="block text-[11px] font-bold text-slate-300">1kHz</span>
+              <span class="block text-[9px] text-slate-500">Mid</span>
+            </div>
+          </div>
+
+          <!-- Band 4: 3.5kHz -->
+          <div class="flex flex-col items-center h-full justify-between">
+            <span class="text-[10px] font-mono text-slate-400" id="gain-val-4">0dB</span>
+            <div class="h-28 flex items-center justify-center">
+              <input type="range" id="eq-slider-4" min="-12" max="12" step="0.5" value="0" orient="vertical"
+                class="eq-slider" oninput="onEqSliderChange(4, this.value)">
+            </div>
+            <div class="text-center mt-1">
+              <span class="block text-[11px] font-bold text-slate-300">3.5kHz</span>
+              <span class="block text-[9px] text-slate-500">Presence</span>
+            </div>
+          </div>
+
+          <!-- Band 5: 12kHz -->
+          <div class="flex flex-col items-center h-full justify-between">
+            <span class="text-[10px] font-mono text-slate-400" id="gain-val-5">0dB</span>
+            <div class="h-28 flex items-center justify-center">
+              <input type="range" id="eq-slider-5" min="-12" max="12" step="0.5" value="0" orient="vertical"
+                class="eq-slider" oninput="onEqSliderChange(5, this.value)">
+            </div>
+            <div class="text-center mt-1">
+              <span class="block text-[11px] font-bold text-slate-300">12kHz</span>
+              <span class="block text-[9px] text-slate-500">Treble</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Footer Info -->
+      <div class="flex items-center justify-between text-[11px] text-slate-500 pt-1">
+        <span>Rentang: -12 dB s/d +12 dB</span>
+        <span class="text-brand-400 flex items-center gap-1"><i class="fa-solid fa-check"></i> Disimpan otomatis</span>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Hidden HTML5 Audio Element with CORS -->
+  <audio id="main-audio" crossorigin="anonymous"></audio>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2 pointer-events-none"></div>
+
+  <!-- JavaScript -->
+  <script src="/static/app.js"></script>
+</body>
+</html>
