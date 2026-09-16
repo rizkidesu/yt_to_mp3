@@ -57,15 +57,21 @@ class DownloadManager:
             t.start()
             self.workers.append(t)
 
-    def add_task(self, url, quality="192"):
+    def add_task(self, url, quality="192", no_playlist=True):
         task_id = str(uuid.uuid4())[:8]
         yt_id = extract_yt_id(url)
         initial_thumb = f"https://i.ytimg.com/vi/{yt_id}/mqdefault.jpg" if yt_id else None
+
+        # Jika memilih untuk TIDAK mengunduh playlist langsung dan URL memiliki ID video tunggal,
+        # bersihkan URL agar hanya mengunduh 1 video tersebut
+        if no_playlist and yt_id and ('list=' in url or 'index=' in url):
+            url = f"https://www.youtube.com/watch?v={yt_id}"
 
         task_info = {
             "id": task_id,
             "url": url,
             "quality": quality,
+            "no_playlist": no_playlist,
             "title": "Memuat informasi...",
             "thumbnail": initial_thumb,
             "duration": None,
@@ -124,6 +130,7 @@ class DownloadManager:
 
         url = task["url"]
         quality = task.get("quality", "192")
+        no_playlist = task.get("no_playlist", True)
 
         def ytdl_progress_hook(d):
             status = d.get("status")
@@ -167,6 +174,7 @@ class DownloadManager:
         ydl_opts = {
             "format": "bestaudio/best",
             "outtmpl": os.path.join(DOWNLOAD_DIR, "%(title)s.%(ext)s"),
+            "noplaylist": True if no_playlist else False,
             "postprocessors": [{
                 "key": "FFmpegExtractAudio",
                 "preferredcodec": "mp3",
@@ -178,22 +186,42 @@ class DownloadManager:
             "no_warnings": True,
             "ignoreerrors": False,
         }
+        if no_playlist:
+            ydl_opts["playlist_items"] = "1"
 
         try:
             with YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(url, download=True)
-                title = info.get("title", "Unknown Title")
-                duration = info.get("duration")
-                thumbnail = info.get("thumbnail")
-                
-                # Menentukan nama file hasil mp3
-                filename = None
-                try:
-                    raw_filename = ydl.prepare_filename(info)
-                    base, _ = os.path.splitext(os.path.basename(raw_filename))
-                    filename = f"{base}.mp3"
-                except Exception:
-                    pass
+                # Jika input adalah playlist namun diunduh 1 video (noplaylist)
+                if 'entries' in info:
+                    entries = [e for e in info['entries'] if e]
+                    if entries:
+                        entry = entries[0]
+                        title = entry.get("title") or info.get("title", "Unknown Title")
+                        duration = entry.get("duration") or info.get("duration")
+                        thumbnail = entry.get("thumbnail") or info.get("thumbnail")
+                        try:
+                            raw_filename = ydl.prepare_filename(entry)
+                            base, _ = os.path.splitext(os.path.basename(raw_filename))
+                            filename = f"{base}.mp3"
+                        except Exception:
+                            filename = None
+                    else:
+                        title = info.get("title", "Unknown Title")
+                        duration = info.get("duration")
+                        thumbnail = info.get("thumbnail")
+                        filename = None
+                else:
+                    title = info.get("title", "Unknown Title")
+                    duration = info.get("duration")
+                    thumbnail = info.get("thumbnail")
+                    filename = None
+                    try:
+                        raw_filename = ydl.prepare_filename(info)
+                        base, _ = os.path.splitext(os.path.basename(raw_filename))
+                        filename = f"{base}.mp3"
+                    except Exception:
+                        pass
 
                 with self.lock:
                     if task_id in self.tasks:
@@ -220,9 +248,30 @@ class DownloadManager:
 
 download_manager = DownloadManager(max_workers=2)
 
+@app.before_request
+def handle_preflight():
+    if request.method == "OPTIONS":
+        res = app.make_default_options_response()
+        res.headers["Access-Control-Allow-Origin"] = "*"
+        res.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+        res.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With"
+        return res
+
+@app.after_request
+def add_cors_headers(response):
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With"
+    return response
+
 @app.route('/')
 def index():
     return render_template('index.html')
+
+@app.route('/favicon.ico')
+def favicon():
+    icon_dir = os.path.join(app.root_path, 'static', 'extension', 'icons')
+    return send_from_directory(icon_dir, 'icon48.png', mimetype='image/png')
 
 @app.route('/api/info', methods=['GET'])
 def get_video_info():
@@ -263,14 +312,33 @@ def get_video_info():
             info = ydl.extract_info(url, download=False)
             if 'entries' in info:
                 # Playlist
-                entries = [e for e in info['entries'] if e]
-                first_thumb = entries[0].get('thumbnail') if entries else None
+                raw_entries = [e for e in info['entries'] if e]
+                first_thumb = raw_entries[0].get('thumbnail') if raw_entries else None
+                entries_list = []
+                for idx, e in enumerate(raw_entries[:150]):
+                    eid = e.get('id')
+                    entries_list.append({
+                        "index": idx + 1,
+                        "id": eid,
+                        "title": e.get('title') or f"Video {idx+1}",
+                        "duration": e.get('duration'),
+                        "duration_formatted": format_duration(e.get('duration')),
+                        "url": f"https://www.youtube.com/watch?v={eid}" if eid else None,
+                        "thumbnail": e.get('thumbnail') or (f"https://i.ytimg.com/vi/{eid}/mqdefault.jpg" if eid else None),
+                        "is_current": (eid == yt_id) if yt_id else False
+                    })
+
+                single_thumb = f"https://i.ytimg.com/vi/{yt_id}/hqdefault.jpg" if yt_id else None
                 return jsonify({
                     "is_playlist": True,
-                    "title": info.get('title', 'Playlist'),
-                    "count": len(entries),
-                    "thumbnail": first_thumb,
-                    "uploader": info.get('uploader') or info.get('channel'),
+                    "title": info.get('title', 'Playlist YouTube'),
+                    "count": len(raw_entries),
+                    "thumbnail": single_thumb or first_thumb,
+                    "uploader": info.get('uploader') or info.get('channel') or 'YouTube',
+                    "has_single_video": bool(yt_id),
+                    "single_video_id": yt_id,
+                    "single_video_url": f"https://www.youtube.com/watch?v={yt_id}" if yt_id else None,
+                    "entries": entries_list
                 })
             else:
                 thumb = info.get('thumbnail')
@@ -288,12 +356,17 @@ def get_video_info():
         # Jika gagal atau diblokir bot check tapi kita memiliki ID YouTube, tetap berikan thumbnail & info dasar
         if yt_id:
             return jsonify({
-                "is_playlist": False,
+                "is_playlist": ('list=' in url),
+                "has_single_video": True,
+                "single_video_id": yt_id,
+                "single_video_url": f"https://www.youtube.com/watch?v={yt_id}",
                 "title": f"YouTube Video ({yt_id})",
                 "duration": None,
                 "duration_formatted": "Video",
                 "thumbnail": f"https://i.ytimg.com/vi/{yt_id}/hqdefault.jpg",
                 "uploader": "YouTube",
+                "count": 1 if ('list=' in url) else None,
+                "entries": []
             })
         return jsonify({"error": str(e)}), 400
 
@@ -302,6 +375,11 @@ def start_download():
     data = request.get_json() or {}
     urls = data.get('urls', [])
     quality = str(data.get('quality', '192'))
+
+    # Opsi playlist: default True (tidak download playlist utuh, hanya 1 video)
+    no_playlist = data.get('no_playlist', True)
+    if 'download_playlist' in data:
+        no_playlist = not bool(data.get('download_playlist'))
 
     if isinstance(urls, str):
         urls = [urls]
@@ -322,7 +400,7 @@ def start_download():
 
     task_ids = []
     for u in cleaned_urls:
-        t = download_manager.add_task(u, quality=quality)
+        t = download_manager.add_task(u, quality=quality, no_playlist=no_playlist)
         task_ids.append(t["id"])
 
     return jsonify({
@@ -500,6 +578,94 @@ def save_urls_txt():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route('/api/open-browser', methods=['GET', 'POST'])
+def open_browser():
+    data = request.get_json(silent=True) or {}
+    target_url = data.get('url') or request.args.get('url') or 'https://www.youtube.com'
+    browser_type = data.get('browser') or request.args.get('browser') or 'default'
+
+    opened = False
+    error = None
+
+    try:
+        import subprocess
+        import webbrowser
+
+        # Jika server berjalan langsung di host dengan DISPLAY
+        if os.environ.get('DISPLAY') or os.environ.get('WAYLAND_DISPLAY'):
+            if browser_type == 'chrome' and os.path.exists('/usr/bin/google-chrome'):
+                subprocess.Popen(['google-chrome', target_url])
+                opened = True
+            elif browser_type == 'brave' and os.path.exists('/usr/bin/brave-browser'):
+                subprocess.Popen(['brave-browser', target_url])
+                opened = True
+            elif browser_type == 'firefox' and os.path.exists('/usr/bin/firefox'):
+                subprocess.Popen(['firefox', target_url])
+                opened = True
+            else:
+                try:
+                    subprocess.Popen(['xdg-open', target_url])
+                    opened = True
+                except Exception:
+                    opened = webbrowser.open(target_url)
+        else:
+            # Di dalam docker atau environment tanpa display langsung
+            opened = webbrowser.open(target_url)
+    except Exception as e:
+        error = str(e)
+
+    return jsonify({
+        "success": True,
+        "url": target_url,
+        "opened_on_server": opened,
+        "error": error
+    })
+
+@app.route('/api/extension/download-zip', methods=['GET'])
+def download_extension_zip():
+    # Cari direktori ekstensi (bisa di ./extension atau ./static/extension)
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    ext_dir = os.path.join(base_dir, 'extension')
+    if not os.path.exists(ext_dir):
+        ext_dir = os.path.join(base_dir, 'static', 'extension')
+
+    if not os.path.exists(ext_dir):
+        return jsonify({"error": "Direktori extension tidak ditemukan"}), 404
+
+    memory_file = io.BytesIO()
+    with zipfile.ZipFile(memory_file, 'w', zipfile.ZIP_DEFLATED) as zf:
+        for root, dirs, files in os.walk(ext_dir):
+            for file in files:
+                file_path = os.path.join(root, file)
+                rel_path = os.path.relpath(file_path, ext_dir)
+                zf.write(file_path, arcname=rel_path)
+
+    memory_file.seek(0)
+    return send_file(
+        memory_file,
+        download_name='youtube-to-mp3-studio-extension.zip',
+        as_attachment=True,
+        mimetype='application/zip'
+    )
+
+@app.route('/extension/youtube-to-mp3-studio.user.js', methods=['GET'])
+def serve_userscript():
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    script_path = os.path.join(base_dir, 'static', 'extension', 'youtube-to-mp3-studio.user.js')
+    if not os.path.exists(script_path):
+        script_path = os.path.join(base_dir, 'extension', 'youtube-to-mp3-studio.user.js')
+    if not os.path.exists(script_path):
+        return jsonify({"error": "Userscript tidak ditemukan"}), 404
+    return send_file(script_path, mimetype='text/javascript; charset=utf-8')
+
+@app.route('/extension/<path:filename>', methods=['GET'])
+def serve_extension_file(filename):
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    ext_dir = os.path.join(base_dir, 'extension')
+    if not os.path.exists(ext_dir):
+        ext_dir = os.path.join(base_dir, 'static', 'extension')
+    return send_from_directory(ext_dir, filename)
+
 def download_from_txt():
     """Fungsi fallback mode CLI untuk kompatibilitas lama"""
     txt_file = URLS_FILE
@@ -522,6 +688,8 @@ def download_from_txt():
     ydl_opts = {
         'format': 'bestaudio/best',
         'outtmpl': os.path.join(output_dir, '%(title)s.%(ext)s'),
+        'noplaylist': True,
+        'playlist_items': '1',
         'postprocessors': [{
             'key': 'FFmpegExtractAudio',
             'preferredcodec': 'mp3',

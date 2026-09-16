@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YouTube to MP3 Studio</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    body {
+      width: 340px;
+      background: #0f172a;
+      color: #f8fafc;
+      font-size: 13px;
+      padding: 14px;
+      user-select: none;
+    }
+    /* Header */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid #1e293b;
+      padding-bottom: 10px;
+      margin-bottom: 12px;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .logo-badge {
+      width: 28px;
+      height: 28px;
+      background: linear-gradient(135deg, #ef4444, #991b1b);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 14px;
+      box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4);
+    }
+    .brand-title {
+      font-weight: 700;
+      font-size: 14px;
+      letter-spacing: -0.2px;
+    }
+    .brand-title span {
+      color: #ef4444;
+    }
+    .status-badge {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 12px;
+      background: #1e293b;
+    }
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #94a3b8;
+    }
+    .status-badge.online .status-dot {
+      background: #10b981;
+      box-shadow: 0 0 6px #10b981;
+    }
+    .status-badge.offline .status-dot {
+      background: #ef4444;
+    }
+
+    /* Video Card */
+    .video-card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      padding: 10px;
+      margin-bottom: 12px;
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .video-thumb {
+      width: 70px;
+      height: 48px;
+      border-radius: 6px;
+      object-fit: cover;
+      background: #0f172a;
+      flex-shrink: 0;
+    }
+    .video-info {
+      flex: 1;
+      overflow: hidden;
+    }
+    .video-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: #f1f5f9;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 3px;
+    }
+    .video-url {
+      font-size: 10.5px;
+      color: #94a3b8;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Not on YouTube Notice */
+    .not-yt-box {
+      background: #1e293b;
+      border: 1px dashed #475569;
+      border-radius: 10px;
+      padding: 14px;
+      text-align: center;
+      margin-bottom: 12px;
+    }
+    .not-yt-box p {
+      font-size: 12px;
+      color: #94a3b8;
+      margin-bottom: 10px;
+    }
+    .btn-open-yt {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #ef4444;
+      color: white;
+      border: none;
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-open-yt:hover {
+      background: #dc2626;
+    }
+
+    /* Quality Selector */
+    .form-group {
+      margin-bottom: 12px;
+    }
+    .form-label {
+      display: block;
+      font-size: 11px;
+      color: #94a3b8;
+      margin-bottom: 6px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+    .quality-options {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 6px;
+    }
+    .quality-btn {
+      background: #1e293b;
+      border: 1px solid #334155;
+      color: #cbd5e1;
+      padding: 7px 8px;
+      border-radius: 8px;
+      font-size: 11.5px;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.15s;
+    }
+    .quality-btn:hover {
+      background: #334155;
+      color: #fff;
+    }
+    .quality-btn.active {
+      background: rgba(239, 68, 68, 0.2);
+      border-color: #ef4444;
+      color: #ef4444;
+      font-weight: 600;
+    }
+
+    /* Main Download Button */
+    .btn-download {
+      width: 100%;
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      color: #ffffff;
+      border: none;
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.35);
+      transition: all 0.15s ease;
+      margin-bottom: 10px;
+    }
+    .btn-download:hover {
+      background: linear-gradient(135deg, #dc2626, #b91c1c);
+      box-shadow: 0 6px 16px rgba(239, 68, 68, 0.5);
+    }
+    .btn-download:disabled {
+      background: #334155;
+      color: #64748b;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    /* Status Alert */
+    .alert-box {
+      padding: 8px 10px;
+      border-radius: 8px;
+      font-size: 11.5px;
+      line-height: 1.35;
+      margin-bottom: 10px;
+      display: none;
+    }
+    .alert-box.success {
+      background: rgba(16, 185, 129, 0.15);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      color: #34d399;
+      display: block;
+    }
+    .alert-box.error {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #f87171;
+      display: block;
+    }
+
+    /* Footer Links */
+    .footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-top: 1px solid #1e293b;
+      padding-top: 10px;
+      margin-top: 4px;
+    }
+    .btn-studio {
+      color: #38bdf8;
+      text-decoration: none;
+      font-size: 11.5px;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-weight: 500;
+    }
+    .btn-studio:hover {
+      text-decoration: underline;
+    }
+    .btn-settings-toggle {
+      background: transparent;
+      border: none;
+      color: #64748b;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    .btn-settings-toggle:hover {
+      color: #94a3b8;
+    }
+
+    /* Settings Panel (Collapsible) */
+    .settings-panel {
+      display: none;
+      background: #1e293b;
+      border-radius: 8px;
+      padding: 10px;
+      margin-top: 10px;
+      border: 1px solid #334155;
+    }
+    .settings-panel.open {
+      display: block;
+    }
+    .settings-input {
+      width: 100%;
+      background: #0f172a;
+      border: 1px solid #334155;
+      color: #f1f5f9;
+      padding: 6px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      margin-top: 4px;
+      margin-bottom: 8px;
+    }
+    .btn-save-settings {
+      background: #334155;
+      color: #fff;
+      border: none;
+      padding: 4px 10px;
+      border-radius: 5px;
+      font-size: 11px;
+      cursor: pointer;
+    }
+    .btn-save-settings:hover {
+      background: #475569;
+    }
+
+    /* Equalizer Section Styles */
+    .eq-card {
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 10px;
+      padding: 10px 12px;
+      margin-bottom: 12px;
+    }
+    .eq-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+    .eq-title {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #f1f5f9;
+    }
+    .eq-badge {
+      font-size: 9.5px;
+      padding: 1.5px 6px;
+      border-radius: 4px;
+      background: #4f46e5;
+      color: #fff;
+      font-weight: 700;
+    }
+    .eq-badge.off {
+      background: #475569;
+      color: #94a3b8;
+    }
+    .eq-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    .eq-select {
+      flex: 1;
+      background: #0f172a;
+      border: 1px solid #334155;
+      color: #f1f5f9;
+      padding: 5px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      outline: none;
+      cursor: pointer;
+    }
+    .eq-slider {
+      accent-color: #6366f1;
+      accent-color: #8b5cf6;
+      cursor: pointer;
+    }
+    /* 6-Band Vertical Graphic Equalizer Grid */
+    .popup-eq-sliders-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 4px;
+      padding: 10px 4px;
+      background: #090d16;
+      border: 1px solid #1e293b;
+      border-radius: 10px;
+      margin-top: 4px;
+    }
+    .popup-eq-band-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+    }
+    .popup-eq-gain-val {
+      font-size: 9.5px;
+      font-weight: 700;
+      color: #38bdf8;
+      min-height: 13px;
+      line-height: 1;
+      text-align: center;
+    }
+    .popup-eq-slider-v {
+      -webkit-appearance: slider-vertical;
+      appearance: slider-vertical;
+      writing-mode: bt-lr;
+      width: 18px;
+      height: 92px;
+      cursor: pointer;
+      accent-color: #8b5cf6;
+      margin: 2px 0;
+    }
+    .popup-eq-freq-label {
+      font-size: 9.5px;
+      color: #94a3b8;
+      font-weight: 600;
+      line-height: 1;
+      text-align: center;
+    }
+    .yt-mp3-switch-input {
+      position: relative;
+      width: 32px;
+      height: 18px;
+      appearance: none;
+      -webkit-appearance: none;
+      background: #475569;
+      outline: none;
+      border-radius: 18px;
+      transition: 0.2s;
+      cursor: pointer;
+      margin: 0;
+    }
+    .yt-mp3-switch-input:checked {
+      background: #10b981;
+    }
+    .yt-mp3-switch-input:before {
+      content: '';
+      position: absolute;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      top: 2px;
+      left: 2px;
+      background: #fff;
+      transition: 0.2s;
+    }
+    .yt-mp3-switch-input:checked:before {
+      left: 16px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="brand">
+      <div class="logo-badge">🎵</div>
+      <div class="brand-title">YT to MP3 <span>Studio</span></div>
+    </div>
+    <div class="status-badge" id="status-badge">
+      <span class="status-dot"></span>
+      <span id="status-text">Memeriksa...</span>
+    </div>
+  </div>
+
+  <!-- Video Info Card (when on YouTube) -->
+  <div id="yt-detected-box" style="display: none;">
+    <div class="video-card">
+      <img id="video-thumb" class="video-thumb" src="" alt="Thumbnail">
+      <div class="video-info">
+        <div id="video-title" class="video-title">Judul Video</div>
+        <div id="video-url" class="video-url">https://youtube.com/...</div>
+      </div>
+    </div>
+
+    <!-- Quality Selector -->
+    <div class="form-group">
+      <label class="form-label">Kualitas Audio (Bitrate)</label>
+      <div class="quality-options">
+        <button class="quality-btn active" data-quality="320">320 kbps (Ultra HQ)</button>
+        <button class="quality-btn" data-quality="256">256 kbps (HQ)</button>
+        <button class="quality-btn" data-quality="192">192 kbps (Standar)</button>
+        <button class="quality-btn" data-quality="128">128 kbps (Hemat)</button>
+      </div>
+    </div>
+
+    <!-- Playlist Selector Card (if playlist detected) -->
+    <div id="popup-playlist-box" style="display: none; background: #1e293b; border: 1px solid #f59e0b; border-radius: 8px; padding: 8px 10px; margin-bottom: 10px;">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+        <span style="font-size: 11px; font-weight: 700; color: #fbbf24;">⚡ Terdeteksi Link Playlist</span>
+        <span style="font-size: 10px; color: #94a3b8;">Opsi Unduhan:</span>
+      </div>
+      <div style="display: flex; gap: 6px;">
+        <button type="button" id="popup-opt-single" class="quality-btn active" style="flex: 1.2; font-size: 10.5px; padding: 6px 4px; line-height: 1.25;">
+          🎯 <strong>Jangan Unduh 1 Playlist</strong><br><span style="font-size: 9.5px; opacity: 0.85;">(Hanya Video Ini)</span>
+        </button>
+        <button type="button" id="popup-opt-all" class="quality-btn" style="flex: 0.8; font-size: 10.5px; padding: 6px 4px; line-height: 1.25;">
+          📑 <strong>Seluruh Playlist</strong><br><span style="font-size: 9.5px; opacity: 0.85;">(Semua Lagu)</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Action Button -->
+    <button id="btn-download-now" class="btn-download">
+      <span>📥 Unduh Lagu Ini (MP3)</span>
+    </button>
+  </div>
+
+  <!-- Equalizer Audio Card -->
+  <div class="eq-card">
+    <div class="eq-header">
+      <div class="eq-title">
+        <span>🎚️ Equalizer Audio</span>
+        <span class="eq-badge" id="popup-eq-status-badge">AKTIF</span>
+      </div>
+      <label style="display:flex; align-items:center; cursor:pointer;">
+        <input type="checkbox" id="popup-eq-power" class="yt-mp3-switch-input" checked title="Aktifkan/Bypass Equalizer">
+      </label>
+    </div>
+
+    <div class="eq-row">
+      <span style="font-size: 11px; color: #94a3b8; font-weight: 500;">Preset:</span>
+      <select id="popup-eq-preset" class="eq-select">
+        <option value="custom">🛠️ Kustom (Custom Pengguna)</option>
+        <option value="flat">Datar (Flat)</option>
+        <option value="dangdut">Dangdut / Kendang Mantap 🔥</option>
+        <option value="bass" selected>Bass Boost 🔊</option>
+        <option value="vocal">Vocal Booster 🎤</option>
+        <option value="rock">Rock 🎸</option>
+        <option value="pop">Pop 🎧</option>
+        <option value="electronic">Electronic / EDM ⚡</option>
+        <option value="jazz">Jazz 🎷</option>
+        <option value="acoustic">Akustik 🎶</option>
+        <option value="treble">Treble Boost ✨</option>
+      </select>
+    </div>
+
+    <div class="eq-row" style="margin-top: 6px; margin-bottom: 6px;">
+      <span style="font-size: 10.5px; color: #cbd5e1;">Volume: <strong id="popup-boost-label" style="color:#818cf8;">100%</strong></span>
+      <input type="range" id="popup-volume-boost" class="eq-slider" min="1.0" max="3.0" step="0.1" value="1.0" style="width: 140px;">
+    </div>
+
+    <!-- Toggle Custom Sliders -->
+    <button type="button" id="btn-toggle-custom-eq" style="width: 100%; background: #0f172a; border: 1px dashed #334155; color: #38bdf8; padding: 5px; border-radius: 6px; font-size: 11px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px; margin-top: 4px;">
+      <span>🎛️ Atur Slider Kustom 6-Band</span>
+      <span id="custom-eq-arrow" style="font-size: 9px;">▼</span>
+    </button>
+
+    <!-- Collapsible 6-Band Custom Sliders -->
+    <div id="popup-custom-sliders-box" style="display: none; margin-top: 8px; border-top: 1px solid #334155; padding-top: 8px; flex-direction: column; gap: 6px;">
+      <div style="display: flex; gap: 4px; margin-bottom: 4px;">
+        <button type="button" id="popup-quick-bass" style="flex:1; background:#0f172a; border:1px solid #334155; color:#cbd5e1; font-size:10px; padding:3px; border-radius:4px; cursor:pointer;">+Bass</button>
+        <button type="button" id="popup-quick-vocal" style="flex:1; background:#0f172a; border:1px solid #334155; color:#cbd5e1; font-size:10px; padding:3px; border-radius:4px; cursor:pointer;">+Vokal</button>
+        <button type="button" id="popup-quick-treble" style="flex:1; background:#0f172a; border:1px solid #334155; color:#cbd5e1; font-size:10px; padding:3px; border-radius:4px; cursor:pointer;">+Treble</button>
+        <button type="button" id="popup-quick-reset" style="flex:1; background:#0f172a; border:1px solid #334155; color:#cbd5e1; font-size:10px; padding:3px; border-radius:4px; cursor:pointer;">↺ Reset</button>
+      </div>
+
+      <!-- 6-Band Vertical Graphic Equalizer Sliders -->
+      <div class="popup-eq-sliders-grid">
+        <div class="popup-eq-band-col">
+          <span id="popup-band-val-0" class="popup-eq-gain-val">0dB</span>
+          <input type="range" id="popup-band-0" min="-12" max="12" step="0.5" value="0" class="popup-eq-slider-v" orient="vertical">
+          <span class="popup-eq-freq-label">60Hz</span>
+        </div>
+        <div class="popup-eq-band-col">
+          <span id="popup-band-val-1" class="popup-eq-gain-val">0dB</span>
+          <input type="range" id="popup-band-1" min="-12" max="12" step="0.5" value="0" class="popup-eq-slider-v" orient="vertical">
+          <span class="popup-eq-freq-label">170Hz</span>
+        </div>
+        <div class="popup-eq-band-col">
+          <span id="popup-band-val-2" class="popup-eq-gain-val">0dB</span>
+          <input type="range" id="popup-band-2" min="-12" max="12" step="0.5" value="0" class="popup-eq-slider-v" orient="vertical">
+          <span class="popup-eq-freq-label">350Hz</span>
+        </div>
+        <div class="popup-eq-band-col">
+          <span id="popup-band-val-3" class="popup-eq-gain-val">0dB</span>
+          <input type="range" id="popup-band-3" min="-12" max="12" step="0.5" value="0" class="popup-eq-slider-v" orient="vertical">
+          <span class="popup-eq-freq-label">1kHz</span>
+        </div>
+        <div class="popup-eq-band-col">
+          <span id="popup-band-val-4" class="popup-eq-gain-val">0dB</span>
+          <input type="range" id="popup-band-4" min="-12" max="12" step="0.5" value="0" class="popup-eq-slider-v" orient="vertical">
+          <span class="popup-eq-freq-label">3.5kHz</span>
+        </div>
+        <div class="popup-eq-band-col">
+          <span id="popup-band-val-5" class="popup-eq-gain-val">0dB</span>
+          <input type="range" id="popup-band-5" min="-12" max="12" step="0.5" value="0" class="popup-eq-slider-v" orient="vertical">
+          <span class="popup-eq-freq-label">12kHz</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Not on YouTube Card -->
+  <div id="not-yt-box" class="not-yt-box">
+    <p>Buka YouTube di browser favorit Anda untuk mulai mengunduh lagu dengan 1 klik.</p>
+    <button id="btn-open-youtube" class="btn-open-yt">
+      <span>🌐 Buka YouTube Sekarang</span>
+    </button>
+  </div>
+
+  <!-- Status Alert -->
+  <div id="alert-box" class="alert-box"></div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <a href="#" id="link-open-studio" class="btn-studio">
+      🎧 Buka Web Studio
+    </a>
+    <button id="btn-toggle-settings" class="btn-settings-toggle" title="Pengaturan Server">
+      ⚙️
+    </button>
+  </div>
+
+  <!-- Settings Panel -->
+  <div id="settings-panel" class="settings-panel">
+    <label class="form-label">Alamat Server YouTube to MP3</label>
+    <input type="text" id="input-server-url" class="settings-input" value="http://localhost:5000">
+    <label style="display: flex; align-items: center; gap: 6px; font-size: 11px; color: #cbd5e1; margin-top: 6px; margin-bottom: 8px; cursor: pointer;">
+      <input type="checkbox" id="popup-chk-always-single" checked style="accent-color: #ef4444; width: 14px; height: 14px;">
+      <span>Abaikan playlist (Hanya unduh 1 video saja)</span>
+    </label>
+    <button id="btn-save-settings" class="btn-save-settings">Simpan</button>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

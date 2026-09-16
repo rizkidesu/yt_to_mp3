@@ -1,52 +1,190 @@
-# Python bytecode & cache
+# ==============================================================================
+# Python - Bytecode & Cache
+# ==============================================================================
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
+.Python
 
+# ==============================================================================
 # Virtual Environments
+# ==============================================================================
 venv/
 .venv/
 env/
 ENV/
 env.bak/
 venv.bak/
+pip-log.txt
+pip-delete-this-directory.txt
+.conda/
 
-# Distribution / packaging
+# ==============================================================================
+# Distribution / Packaging
+# ==============================================================================
 build/
 dist/
+develop-eggs/
+eggs/
+.eggs/
+parts/
+sdist/
+var/
+wheels/
 *.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
 
-# Downloaded media & temporary download files
+# ==============================================================================
+# Testing, Coverage & Linters
+# ==============================================================================
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+.hypothesis/
+.mypy_cache/
+.ruff_cache/
+
+# ==============================================================================
+# Flask & Web Application
+# ==============================================================================
+instance/
+.webassets-cache/
+
+# ==============================================================================
+# Media, yt-dlp & Downloads
+# ==============================================================================
+# Download directory contents (preserve directory via .gitkeep)
 downloads/*
 !downloads/.gitkeep
+!downloads/**/.gitkeep
+
+# Audio formats
 *.mp3
 *.m4a
 *.webm
 *.opus
+*.wav
+*.flac
+*.aac
+*.ogg
+
+# Video formats
 *.mp4
 *.mkv
+*.avi
+*.mov
+
+# Temporary & partial download files (yt-dlp, aria2, FFmpeg)
 *.part
 *.ytdl
 *.temp
+*.tmp
+*.aria2
+*.frag
+*.frag.urls
+*.ytdl.part
 
-# Environment variables & secrets
+# Exported bulk archives
+*.zip
+*.tar
+*.tar.gz
+*.rar
+
+# yt-dlp history & archives
+archive.txt
+download_archive.txt
+*.archive
+
+# ==============================================================================
+# Environment Variables, Secrets & YouTube Auth
+# ==============================================================================
 .env
 .env.*
 !.env.example
+!.env.template
+
+# YouTube cookies & authentication credentials
 cookies.txt
 *.cookies
+*.cookie
+yt-dlp.conf
 
-# Logs
+# SSL / TLS Keys & Certificates
+*.pem
+*.key
+*.crt
+*.pfx
+credentials.json
+client_secret*.json
+token.json
+
+# ==============================================================================
+# Docker Local Overrides
+# ==============================================================================
+docker-compose.override.yml
+docker-compose*.local.yml
+.docker/
+
+# ==============================================================================
+# Databases & Local Storage
+# ==============================================================================
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+
+# ==============================================================================
+# Logs & Process IDs
+# ==============================================================================
 *.log
+logs/
+*.pid
 
-# Editor & IDE directories
+# ==============================================================================
+# Editors & IDEs
+# ==============================================================================
+# VS Code
 .vscode/
+
+# PyCharm / JetBrains
 .idea/
+
+# Sublime Text
+*.sublime-workspace
+*.sublime-project
+
+# Vim / Emacs & Backup files
 *.swp
 *.swo
 *~
+.#*
 
-# Operating System files
+# ==============================================================================
+# Operating System Artifacts
+# ==============================================================================
+# macOS
 .DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# Windows
 Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+.directory
+.Trash-*
+.fuse_hidden*

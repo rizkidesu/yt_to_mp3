@@ -16,3 +16,5 @@ services:
       # Mapping templates & static agar perubahan tampilan langsung aktif tanpa rebuild
       - ./templates:/app/templates
       - ./static:/app/static
+      # Mapping folder extension browser
+      - ./extension:/app/extension

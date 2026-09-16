@@ -4,6 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>YouTube to MP3 Studio</title>
+  <!-- Favicon / Tab Icon -->
+  <link rel="icon" type="image/png" sizes="32x32" href="/static/extension/icons/icon48.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/static/extension/icons/icon16.png">
+  <link rel="shortcut icon" href="/static/favicon.ico">
+  <link rel="apple-touch-icon" sizes="128x128" href="/static/extension/icons/icon128.png">
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Font Awesome Icons -->
@@ -53,9 +58,13 @@
         </div>
       </div>
 
-      <!-- Quick Stats / Server Info -->
+      <!-- Quick Stats / Server Info & Launcher -->
       <div class="flex items-center gap-3">
-        <div class="hidden sm:flex items-center gap-2 bg-dark-800 border border-slate-700/60 rounded-lg px-3 py-1.5 text-xs text-slate-300">
+        <button onclick="openYouTubeInBrowser()" title="Buka YouTube di Browser Anda" class="flex items-center gap-2 bg-gradient-to-r from-brand-600 to-red-600 hover:from-brand-500 hover:to-red-500 text-white rounded-lg px-3.5 py-1.5 text-xs font-semibold shadow-md shadow-brand-600/30 transition transform hover:-translate-y-0.5">
+          <i class="fa-brands fa-youtube text-sm"></i>
+          <span class="hidden sm:inline">Buka YouTube</span>
+        </button>
+        <div class="hidden md:flex items-center gap-2 bg-dark-800 border border-slate-700/60 rounded-lg px-3 py-1.5 text-xs text-slate-300">
           <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
           <span>Status: <strong class="text-emerald-400 font-medium">Aktif</strong></span>
         </div>
@@ -82,6 +91,10 @@
       <button onclick="switchTab('urls')" id="tab-btn-urls" class="nav-tab flex items-center gap-2 py-3 px-4 text-sm font-medium border-b-2 transition">
         <i class="fa-solid fa-file-lines"></i> Kelola urls.txt
       </button>
+      <button onclick="switchTab('extension')" id="tab-btn-extension" class="nav-tab flex items-center gap-2 py-3 px-4 text-sm font-medium border-b-2 transition text-red-400 hover:text-red-300">
+        <i class="fa-solid fa-puzzle-piece text-brand-500"></i> Ekstensi Browser
+        <span class="px-1.5 py-0.2 text-[10px] font-bold rounded-full bg-brand-500/20 text-brand-400 border border-brand-500/30">Mirip Ekstensi</span>
+      </button>
     </div>
   </header>
 
@@ -100,6 +113,24 @@
         </button>
       </div>
 
+      <!-- Extension Quick Tip Banner -->
+      <div class="max-w-2xl mx-auto bg-dark-850/80 border border-brand-500/20 rounded-xl p-3.5 flex flex-wrap items-center justify-between gap-3 text-xs shadow-md">
+        <div class="flex items-center gap-2.5 text-slate-300">
+          <span class="w-7 h-7 rounded-lg bg-brand-500/20 text-brand-400 flex items-center justify-center shrink-0">
+            <i class="fa-solid fa-puzzle-piece"></i>
+          </span>
+          <span>Malas copy-paste link? Buka YouTube dan unduh langsung seperti ekstensi!</span>
+        </div>
+        <div class="flex items-center gap-2 shrink-0">
+          <button onclick="openYouTubeInBrowser()" class="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-500 text-white font-medium transition flex items-center gap-1.5">
+            <i class="fa-brands fa-youtube"></i> Buka YouTube
+          </button>
+          <button onclick="switchTab('extension')" class="px-3 py-1.5 rounded-lg bg-dark-750 hover:bg-dark-700 text-brand-400 border border-brand-500/30 font-medium transition">
+            Lihat Ekstensi
+          </button>
+        </div>
+      </div>
+
       <!-- Single Download Box -->
       <div id="single-download-box" class="max-w-2xl mx-auto bg-dark-850 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-5">
         <div>
@@ -110,6 +141,16 @@
             <button onclick="pasteToSingleInput()" title="Tempel dari Clipboard" class="absolute right-2 px-3 py-1.5 text-xs rounded-lg bg-dark-800 hover:bg-dark-750 text-slate-300 border border-slate-700 transition flex items-center gap-1.5">
               <i class="fa-regular fa-paste"></i> Tempel
             </button>
+          </div>
+          <!-- Checkbox Abaikan Playlist -->
+          <div class="flex items-center justify-between text-xs text-slate-400 mt-2">
+            <label class="inline-flex items-center gap-2 cursor-pointer select-none" title="Jangan mendownload 1 playlist langsung jika URL berasal dari playlist">
+              <input type="checkbox" id="chk-ignore-playlist" checked onchange="onIgnorePlaylistToggle(this.checked)" class="rounded border-slate-700 bg-dark-900 text-brand-600 focus:ring-brand-500 w-4 h-4 cursor-pointer">
+              <span class="text-slate-300 font-medium hover:text-white">Jangan unduh 1 playlist langsung (Hanya unduh 1 video tunggal)</span>
+            </label>
+            <span class="text-[11px] text-emerald-400 hidden sm:flex items-center gap-1">
+              <i class="fa-solid fa-shield-check"></i> Bebas antrean panjang
+            </span>
           </div>
         </div>
 
@@ -131,6 +172,63 @@
               <span><i class="fa-regular fa-clock mr-1 text-slate-500"></i><span id="preview-duration">--:--</span></span>
               <span id="preview-type" class="px-2 py-0.5 rounded bg-brand-500/10 text-brand-400 text-[10px] font-medium border border-brand-500/20">Video</span>
             </div>
+          </div>
+        </div>
+
+        <!-- Playlist Options Box (When Playlist is Detected) -->
+        <div id="playlist-options-box" class="hidden bg-dark-900 border border-amber-500/40 rounded-xl p-4 space-y-3">
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2 text-amber-400 font-bold text-xs sm:text-sm">
+              <i class="fa-solid fa-list-check text-base"></i>
+              <span>⚡ Terdeteksi Link Playlist YouTube</span>
+            </div>
+            <span id="playlist-count-badge" class="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[11px] font-bold border border-amber-500/30">0 Video</span>
+          </div>
+          <p class="text-xs text-slate-400">
+            Link ini terhubung ke playlist. Pilih opsi unduhan di bawah agar tidak perlu mengunduh 1 playlist langsung:
+          </p>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-2.5 pt-1">
+            <!-- Option 1: Single Video Only -->
+            <label id="opt-single-label-card" class="relative flex items-start gap-2.5 p-3 rounded-xl bg-dark-850 border border-brand-500 bg-brand-500/10 cursor-pointer transition">
+              <input type="radio" name="playlist-mode" value="single" checked class="mt-1 text-brand-600 focus:ring-brand-500 cursor-pointer" onchange="onPlaylistModeRadioChange()">
+              <div class="min-w-0">
+                <span id="opt-single-title" class="block text-xs font-bold text-slate-200">🎯 Hanya 1 Video Saja (Rekomendasi)</span>
+                <span id="opt-single-desc" class="block text-[11px] text-slate-400 mt-0.5">Abaikan playlist. Hanya unduh 1 lagu (bebas antrean).</span>
+              </div>
+            </label>
+
+            <!-- Option 2: Custom Selection -->
+            <label id="opt-custom-label-card" class="relative flex items-start gap-2.5 p-3 rounded-xl bg-dark-850 border border-slate-750 hover:border-slate-600 cursor-pointer transition">
+              <input type="radio" name="playlist-mode" value="custom" class="mt-1 text-brand-600 focus:ring-brand-500 cursor-pointer" onchange="onPlaylistModeRadioChange()">
+              <div class="min-w-0">
+                <span class="block text-xs font-bold text-slate-200 flex items-center gap-1.5">
+                  <span>📝 Pilih Lagu Tertentu</span>
+                  <span id="opt-custom-count-badge" class="hidden text-[10px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-300 font-bold">0 dipilih</span>
+                </span>
+                <span class="block text-[11px] text-slate-400 mt-0.5">Pilih lagu mana saja yang ingin diunduh dari daftar.</span>
+              </div>
+            </label>
+
+            <!-- Option 3: Full Playlist -->
+            <label id="opt-all-label-card" class="relative flex items-start gap-2.5 p-3 rounded-xl bg-dark-850 border border-slate-750 hover:border-slate-600 cursor-pointer transition">
+              <input type="radio" name="playlist-mode" value="all" class="mt-1 text-brand-600 focus:ring-brand-500 cursor-pointer" onchange="onPlaylistModeRadioChange()">
+              <div class="min-w-0">
+                <span class="block text-xs font-bold text-slate-200">📑 Seluruh Playlist</span>
+                <span class="block text-[11px] text-slate-400 mt-0.5">Unduh semua lagu dalam playlist ini sekaligus.</span>
+              </div>
+            </label>
+          </div>
+
+          <!-- Dynamic Status / Helper Notice Box -->
+          <div id="playlist-mode-notice" class="p-2.5 rounded-lg bg-dark-850 border border-slate-800 text-xs flex flex-wrap items-center justify-between gap-2">
+            <div id="playlist-mode-notice-text" class="text-slate-300 flex items-center gap-2">
+              <i class="fa-solid fa-shield-check text-brand-400"></i>
+              <span><strong>Mode Aman:</strong> Hanya 1 lagu yang akan diunduh. Sisa playlist diabaikan.</span>
+            </div>
+            <button type="button" id="btn-open-playlist-modal-helper" onclick="openPlaylistItemsModal()" class="px-2.5 py-1 rounded-md bg-dark-800 hover:bg-dark-750 text-amber-400 hover:text-amber-300 border border-amber-500/30 text-xs font-medium transition flex items-center gap-1">
+              <i class="fa-solid fa-list-ul"></i> Buka Daftar Lagu
+            </button>
           </div>
         </div>
 
@@ -200,15 +298,22 @@
             Terdeteksi: <strong id="batch-count" class="text-brand-400 font-bold text-sm">0</strong> URL valid
           </div>
 
-          <!-- Quality Selector -->
-          <div class="flex items-center gap-2">
-            <span class="text-xs text-slate-400">Kualitas:</span>
-            <select id="quality-batch" class="bg-dark-900 border border-slate-700 text-xs text-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:border-brand-500">
-              <option value="320">320 kbps (Ultra HQ)</option>
-              <option value="256">256 kbps (HQ)</option>
-              <option value="192" selected>192 kbps (Standar HQ)</option>
-              <option value="128">128 kbps (Hemat)</option>
-            </select>
+          <div class="flex flex-wrap items-center gap-3">
+            <label class="inline-flex items-center gap-1.5 cursor-pointer select-none text-xs text-slate-300" title="Abaikan sisa playlist jika terdapat link playlist dalam batch">
+              <input type="checkbox" id="batch-ignore-playlist" checked class="rounded border-slate-700 bg-dark-900 text-brand-600 focus:ring-brand-500 w-4 h-4 cursor-pointer">
+              <span>Jangan unduh 1 playlist langsung (Hanya unduh 1 video per link playlist)</span>
+            </label>
+
+            <!-- Quality Selector -->
+            <div class="flex items-center gap-2">
+              <span class="text-xs text-slate-400">Kualitas:</span>
+              <select id="quality-batch" class="bg-dark-900 border border-slate-700 text-xs text-slate-200 rounded-lg px-3 py-2 focus:outline-none focus:border-brand-500">
+                <option value="320">320 kbps (Ultra HQ)</option>
+                <option value="256">256 kbps (HQ)</option>
+                <option value="192" selected>192 kbps (Standar HQ)</option>
+                <option value="128">128 kbps (Hemat)</option>
+              </select>
+            </div>
           </div>
         </div>
 
@@ -327,7 +432,11 @@
           </h2>
           <p class="text-xs text-slate-400">Edit daftar URL yang tersimpan di server secara langsung</p>
         </div>
-        <div class="flex items-center gap-2">
+        <div class="flex flex-wrap items-center gap-2">
+          <label class="inline-flex items-center gap-1.5 cursor-pointer select-none text-xs text-slate-300 mr-1" title="Abaikan sisa playlist jika terdapat link playlist dalam file urls.txt">
+            <input type="checkbox" id="chk-urls-ignore-playlist" checked class="rounded border-slate-700 bg-dark-900 text-brand-600 focus:ring-brand-500 w-4 h-4 cursor-pointer">
+            <span>Jangan unduh 1 playlist langsung</span>
+          </label>
           <button onclick="downloadAllFromUrlsTxtEditor()" class="px-3.5 py-2 text-xs font-semibold rounded-xl bg-brand-600 hover:bg-brand-500 text-white transition flex items-center gap-2">
             <i class="fa-solid fa-cloud-arrow-down"></i> Unduh Semua Baris Ini
           </button>
@@ -340,6 +449,203 @@
       <div class="bg-dark-850 border border-slate-800 rounded-2xl p-4">
         <textarea id="editor-urls-content" rows="18" class="w-full bg-dark-900 border border-slate-750 rounded-xl p-4 text-xs font-mono text-slate-200 placeholder-slate-600 focus:outline-none focus:ring-2 focus:ring-brand-500" placeholder="# Masukkan URL YouTube di sini..."></textarea>
       </div>
+    </section>
+
+    <!-- ================= TAB 5: BROWSER & EKSTENSI ================= -->
+    <section id="tab-extension" class="tab-content hidden space-y-6">
+      
+      <!-- Hero Banner -->
+      <div class="relative overflow-hidden bg-gradient-to-br from-dark-850 via-dark-800 to-brand-950/40 border border-brand-500/20 rounded-2xl p-6 sm:p-8 shadow-2xl">
+        <div class="relative z-10 max-w-3xl space-y-4">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/10 border border-brand-500/30 text-brand-400 text-xs font-semibold">
+            <i class="fa-solid fa-bolt"></i> Buka YouTube & Unduh Mirip Ekstensi
+          </div>
+          <h2 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight leading-tight">
+            Nonton YouTube di Browser Favorit,<br>
+            <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-500 via-rose-400 to-amber-400">Unduh MP3 & Equalizer Audio Aktif Langsung di YouTube!</span>
+          </h2>
+          <p class="text-slate-300 text-sm leading-relaxed">
+            Tidak perlu lagi repot copy-paste link bolak-balik! Cukup pasang ekstensi ini di browser favorit Anda. Saat menonton video di YouTube, tombol <strong class="text-brand-400">"🎵 Unduh MP3"</strong> dan tombol <strong class="text-indigo-400">"🎚️ Equalizer" (Aktif)</strong> dengan 10 Preset & Volume Boost 300% akan otomatis muncul di bawah video.
+          </p>
+
+          <div class="pt-2 flex flex-wrap items-center gap-3">
+            <button onclick="openYouTubeInBrowser()" class="px-5 py-3 rounded-xl bg-gradient-to-r from-brand-600 to-red-600 hover:from-brand-500 hover:to-red-500 text-white font-bold text-sm shadow-lg shadow-brand-600/30 transition transform hover:-translate-y-0.5 flex items-center gap-2.5">
+              <i class="fa-brands fa-youtube text-lg"></i>
+              <span>🌐 Buka YouTube di Browser Favorit</span>
+            </button>
+            <a href="/api/extension/download-zip" download="youtube-to-mp3-studio-extension.zip" class="px-5 py-3 rounded-xl bg-dark-750 hover:bg-dark-700 text-slate-100 border border-slate-700 font-semibold text-sm transition flex items-center gap-2">
+              <i class="fa-solid fa-file-zipper text-brand-400"></i>
+              <span>Unduh Ekstensi (.ZIP)</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Background Glow Accent -->
+        <div class="absolute -right-16 -top-16 w-80 h-80 bg-brand-600/10 rounded-full blur-3xl pointer-events-none"></div>
+      </div>
+
+      <!-- Interactive Mockup Preview -->
+      <div class="bg-dark-850 border border-slate-800 rounded-2xl p-6 space-y-4">
+        <h3 class="text-sm font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2">
+          <i class="fa-solid fa-eye text-brand-500"></i> Pratinjau Tampilan di Halaman YouTube Anda
+        </h3>
+        
+        <!-- Mockup Card of YouTube Action Bar -->
+        <div class="bg-dark-900 border border-slate-750 rounded-xl p-4 sm:p-5 space-y-3 shadow-inner">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+            <div class="flex items-center gap-3">
+              <div class="w-9 h-9 rounded-full bg-red-600 flex items-center justify-center text-white font-bold text-xs">YT</div>
+              <div>
+                <p class="text-xs font-bold text-slate-200">Alan Walker - Faded (Official Music Video)</p>
+                <p class="text-[11px] text-slate-400">Alan Walker • 3.6M views</p>
+              </div>
+            </div>
+            <div class="hidden sm:flex items-center gap-1 text-xs text-slate-400">
+              <span class="px-2.5 py-1 rounded-full bg-slate-800">Like</span>
+              <span class="px-2.5 py-1 rounded-full bg-slate-800">Share</span>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap items-center justify-between gap-3 pt-1">
+            <span class="text-xs text-slate-400 flex items-center gap-1.5">
+              <i class="fa-solid fa-arrow-right text-brand-400"></i> Tombol yang disisipkan oleh ekstensi:
+            </span>
+
+            <!-- The Injected Button Demo -->
+            <div class="flex items-center gap-2">
+              <div class="inline-flex items-center gap-2 bg-gradient-to-r from-brand-600 to-red-600 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg shadow-brand-600/40 ring-2 ring-brand-400/30">
+                <i class="fa-solid fa-music"></i>
+                <span>Unduh MP3</span>
+                <span class="text-[10px] opacity-80">▼</span>
+              </div>
+              <div class="inline-flex items-center gap-1.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-xs font-bold px-3.5 py-2 rounded-full shadow-lg shadow-indigo-600/40 ring-2 ring-indigo-400/30">
+                <span>🎚️ Equalizer</span>
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3 Installation Methods Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+
+        <!-- Method 1: Chrome/Brave/Edge Extension (Recommended) -->
+        <div class="bg-dark-850 border border-brand-500/30 rounded-2xl p-6 flex flex-col justify-between relative shadow-xl">
+          <div class="space-y-4">
+            <div class="flex items-center justify-between">
+              <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-brand-500/20 text-brand-400 border border-brand-500/30">
+                ⭐ Direkomendasikan
+              </span>
+              <i class="fa-brands fa-chrome text-2xl text-slate-300"></i>
+            </div>
+            
+            <h3 class="text-base font-bold text-white">Ekstensi Browser (Manifest V3)</h3>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              Dapat dipasang di Google Chrome, Brave Browser, Microsoft Edge, Opera, dan browser berbasis Chromium lainnya.
+            </p>
+
+            <div class="space-y-2 text-xs text-slate-300 pt-2 border-t border-slate-800">
+              <p class="font-semibold text-slate-200">Cara Pasang (Hanya 1 Menit):</p>
+              <ol class="list-decimal list-inside space-y-1.5 text-slate-400">
+                <li>Buka <code class="text-brand-400 bg-dark-900 px-1 py-0.5 rounded">chrome://extensions</code> di browser.</li>
+                <li>Aktifkan sakelar <strong>Developer Mode</strong> di kanan atas.</li>
+                <li>Klik tombol <strong>Load unpacked</strong>.</li>
+                <li>Pilih folder <code class="text-amber-400 bg-dark-900 px-1 py-0.5 rounded">extension</code> dari proyek ini:</li>
+              </ol>
+
+              <div class="bg-dark-900 border border-slate-800 rounded-lg p-2.5 flex items-center justify-between gap-2 mt-1">
+                <span class="text-[11px] font-mono text-slate-400 truncate">.../youtube_to_mp3/extension</span>
+                <button onclick="copyExtensionPath()" class="text-xs px-2 py-1 rounded bg-dark-800 hover:bg-dark-750 text-slate-200 border border-slate-700 shrink-0">
+                  <i class="fa-regular fa-copy"></i> Salin Path
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div class="pt-5 mt-4 border-t border-slate-800 space-y-2">
+            <a href="/api/extension/download-zip" download="youtube-to-mp3-studio-extension.zip" class="w-full py-2.5 rounded-xl bg-brand-600 hover:bg-brand-500 text-white font-semibold text-xs flex items-center justify-center gap-2 shadow transition">
+              <i class="fa-solid fa-download"></i> Unduh File Ekstensi (.ZIP)
+            </a>
+          </div>
+        </div>
+
+        <!-- Method 2: Tampermonkey Userscript -->
+        <div class="bg-dark-850 border border-slate-800 rounded-2xl p-6 flex flex-col justify-between shadow-xl">
+          <div class="space-y-4">
+            <div class="flex items-center justify-between">
+              <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                1-Klik Pasang
+              </span>
+              <i class="fa-solid fa-code text-2xl text-amber-400"></i>
+            </div>
+            
+            <h3 class="text-base font-bold text-white">Tampermonkey / Violentmonkey</h3>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              Jika Anda sudah memasang ekstensi Tampermonkey atau Violentmonkey di Chrome / Firefox / Safari, cukup 1-klik untuk mengaktifkannya!
+            </p>
+
+            <div class="space-y-2 text-xs text-slate-400 pt-2 border-t border-slate-800">
+              <p class="text-slate-300 font-semibold">Keunggulan:</p>
+              <ul class="list-disc list-inside space-y-1">
+                <li>Tidak perlu menyalakan Developer Mode</li>
+                <li>Mendukung Firefox & Chrome</li>
+                <li>Langsung aktif begitu disimpan</li>
+              </ul>
+            </div>
+          </div>
+
+          <div class="pt-5 mt-4 border-t border-slate-800 space-y-2">
+            <a href="/extension/youtube-to-mp3-studio.user.js" target="_blank" class="w-full py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-semibold text-xs flex items-center justify-center gap-2 shadow transition">
+              <i class="fa-solid fa-bolt"></i> Pasang Otomatis (1-Klik)
+            </a>
+            <button onclick="copyUserscriptCode()" class="w-full py-2 rounded-xl bg-dark-800 hover:bg-dark-750 text-slate-300 font-medium text-xs flex items-center justify-center gap-2 border border-slate-700 transition">
+              <i class="fa-regular fa-copy"></i> Salin Kode Userscript
+            </button>
+          </div>
+        </div>
+
+        <!-- Method 3: Bookmarklet & Desktop Launcher -->
+        <div class="bg-dark-850 border border-slate-800 rounded-2xl p-6 flex flex-col justify-between shadow-xl">
+          <div class="space-y-4">
+            <div class="flex items-center justify-between">
+              <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30">
+                Tanpa Install
+              </span>
+              <i class="fa-solid fa-bookmark text-2xl text-blue-400"></i>
+            </div>
+            
+            <h3 class="text-base font-bold text-white">Bookmarklet & Launcher Host</h3>
+            <p class="text-xs text-slate-300 leading-relaxed">
+              Cukup seret tombol di bawah ke Bilah Bookmark (Bookmarks Bar) browser Anda, atau gunakan skrip launcher di Linux host.
+            </p>
+
+            <div class="pt-2 border-t border-slate-800 space-y-3">
+              <div>
+                <p class="text-xs font-semibold text-slate-300 mb-1.5">Tarik Tombol Ini ke Bookmarks Bar:</p>
+                <a href="javascript:(function(){const u=window.location.href;if(!u.includes('youtube.com')&&!u.includes('youtu.be')){alert('Buka video YouTube terlebih dahulu!');return;}fetch('http://localhost:5000/api/download',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({urls:[u],quality:'320'})}).then(r=>r.json()).then(d=>{if(d.success){if(confirm('✅ Lagu berhasil dikirim ke antrean unduhan YouTube to MP3 Studio!\n\nBuka Web Studio sekarang?')){window.open('http://localhost:5000','_blank');}}else{alert('Error: '+(d.error||'Gagal mengunduh'));}}).catch(e=>{alert('⚠️ Gagal terhubung ke http://localhost:5000.\nPastikan server YouTube to MP3 Studio aktif!');});})();" 
+                   title="Tarik tombol ini ke Bookmarks Bar browser Anda"
+                   class="inline-block px-3.5 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs cursor-move shadow">
+                  ⭐ Unduh ke MP3 Studio
+                </a>
+              </div>
+
+              <div class="text-[11px] text-slate-400">
+                <p class="font-semibold text-slate-300 mb-1">Jalankan via Terminal Host:</p>
+                <code class="bg-dark-900 border border-slate-750 px-2 py-1 rounded block text-emerald-400 font-mono">./open_youtube.sh</code>
+              </div>
+            </div>
+          </div>
+
+          <div class="pt-5 mt-4 border-t border-slate-800">
+            <button onclick="openYouTubeInBrowser()" class="w-full py-2.5 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs flex items-center justify-center gap-2 shadow transition">
+              <i class="fa-solid fa-arrow-up-right-from-square"></i> Buka YouTube Sekarang
+            </button>
+          </div>
+        </div>
+
+      </div>
+
     </section>
   </main>
 
@@ -464,6 +770,22 @@
         </button>
       </div>
 
+      <!-- Quick Custom Adjustment Buttons -->
+      <div class="grid grid-cols-4 gap-2">
+        <button onclick="quickAdjustEq('bass')" class="text-[11px] py-1.5 px-2 rounded-lg bg-dark-800 hover:bg-brand-600/30 text-slate-300 hover:text-brand-300 border border-slate-750 hover:border-brand-500/50 transition font-medium text-center" title="Tambah Bass +3dB">
+          <i class="fa-solid fa-plus text-[9px] mr-1 text-brand-400"></i>Bass
+        </button>
+        <button onclick="quickAdjustEq('vocal')" class="text-[11px] py-1.5 px-2 rounded-lg bg-dark-800 hover:bg-brand-600/30 text-slate-300 hover:text-brand-300 border border-slate-750 hover:border-brand-500/50 transition font-medium text-center" title="Tambah Vokal +3dB">
+          <i class="fa-solid fa-plus text-[9px] mr-1 text-brand-400"></i>Vokal
+        </button>
+        <button onclick="quickAdjustEq('treble')" class="text-[11px] py-1.5 px-2 rounded-lg bg-dark-800 hover:bg-brand-600/30 text-slate-300 hover:text-brand-300 border border-slate-750 hover:border-brand-500/50 transition font-medium text-center" title="Tambah Treble +3dB">
+          <i class="fa-solid fa-plus text-[9px] mr-1 text-brand-400"></i>Treble
+        </button>
+        <button onclick="quickAdjustEq('loudness')" class="text-[11px] py-1.5 px-2 rounded-lg bg-dark-800 hover:bg-brand-600/30 text-slate-300 hover:text-brand-300 border border-slate-750 hover:border-brand-500/50 transition font-medium text-center" title="Kurva Dinamis Loudness V-Shape">
+          <i class="fa-solid fa-bolt text-[9px] mr-1 text-amber-400"></i>Loudness
+        </button>
+      </div>
+
       <!-- Equalizer 6-Band Sliders -->
       <div class="bg-dark-900 border border-slate-800 rounded-xl p-4">
         <div class="grid grid-cols-6 gap-2 sm:gap-3 items-end h-44 pb-1">
@@ -555,6 +877,118 @@
         <span class="text-brand-400 flex items-center gap-1"><i class="fa-solid fa-check"></i> Disimpan otomatis</span>
       </div>
 
+    </div>
+  </div>
+
+  <!-- ================= PLAYLIST ITEMS SELECTOR MODAL ================= -->
+  <div id="playlist-items-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm hidden transition-opacity duration-200" onclick="closePlaylistItemsModal()">
+    <div class="bg-dark-850 border border-slate-750 rounded-2xl p-5 sm:p-6 w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl relative" onclick="event.stopPropagation()">
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-3">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400">
+            <i class="fa-solid fa-list-check text-base"></i>
+          </div>
+          <div>
+            <h3 class="text-sm sm:text-base font-bold text-slate-100 flex items-center gap-2">
+              Pilih Video dari Playlist
+              <span id="modal-playlist-total" class="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 font-semibold border border-slate-700">0 Lagu</span>
+            </h3>
+            <p class="text-[11px] text-slate-400">Centang lagu yang hanya ingin Anda unduh (tidak perlu unduh seluruh playlist)</p>
+          </div>
+        </div>
+        <button onclick="closePlaylistItemsModal()" class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-dark-800 transition">
+          <i class="fa-solid fa-xmark text-base"></i>
+        </button>
+      </div>
+
+      <!-- Action & Filter Bar -->
+      <div class="flex items-center justify-between gap-2 mb-3 bg-dark-900 p-2.5 rounded-xl border border-slate-800 text-xs">
+        <div class="flex items-center gap-3">
+          <label class="inline-flex items-center gap-1.5 cursor-pointer font-medium text-slate-300 select-none">
+            <input type="checkbox" id="modal-select-all-playlist" onchange="toggleSelectAllPlaylistItems(this.checked)" class="rounded border-slate-700 bg-dark-800 text-brand-600 w-4 h-4 cursor-pointer">
+            <span>Pilih Semua</span>
+          </label>
+          <span class="text-slate-600">|</span>
+          <span class="text-slate-400">Dipilih: <strong id="modal-selected-count" class="text-brand-400 font-bold">0</strong> lagu</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <button type="button" onclick="selectOnlyCurrentPlaylistItem()" id="btn-select-current-only" class="text-[11px] px-2.5 py-1 rounded-lg bg-dark-800 hover:bg-dark-750 text-slate-300 hover:text-white border border-slate-750 transition hidden">
+            Hanya Video Ini
+          </button>
+        </div>
+      </div>
+
+      <!-- Items List (Scrollable) -->
+      <div id="playlist-items-container" class="flex-1 overflow-y-auto space-y-2 pr-1 min-h-[160px] max-h-[350px]">
+        <!-- Rendered by JS -->
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="flex items-center justify-between border-t border-slate-800 pt-3 mt-3">
+        <button type="button" onclick="closePlaylistItemsModal()" class="text-xs px-4 py-2 rounded-xl bg-dark-800 hover:bg-dark-750 text-slate-300 border border-slate-750 transition">
+          Batal
+        </button>
+        <div class="flex items-center gap-2">
+          <button type="button" onclick="savePlaylistSelectionAndClose()" class="text-xs px-3.5 py-2 rounded-xl bg-dark-800 hover:bg-dark-750 text-amber-300 border border-amber-500/30 transition flex items-center gap-1.5">
+            <i class="fa-solid fa-check"></i> Simpan Pilihan
+          </button>
+          <button type="button" onclick="downloadSelectedPlaylistItems()" id="btn-download-selected-playlist" class="text-xs px-5 py-2 rounded-xl bg-gradient-to-r from-brand-600 to-brand-700 hover:from-brand-500 hover:to-brand-600 text-white font-semibold shadow transition flex items-center gap-2">
+            <i class="fa-solid fa-download"></i> Unduh Sekarang (<span id="modal-submit-count">0</span>)
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= PLAYLIST CONFIRM FULL DOWNLOAD MODAL ================= -->
+  <div id="playlist-confirm-full-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm hidden transition-opacity duration-200" onclick="closeConfirmFullModal()">
+    <div class="bg-dark-850 border border-amber-500/40 rounded-2xl p-5 sm:p-6 w-full max-w-lg flex flex-col shadow-2xl relative" onclick="event.stopPropagation()">
+      <div class="flex items-start gap-3 mb-4">
+        <div class="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0 mt-0.5">
+          <i class="fa-solid fa-triangle-exclamation text-lg"></i>
+        </div>
+        <div>
+          <h3 class="text-base font-bold text-slate-100">Peringatan: Unduh Seluruh Playlist</h3>
+          <p class="text-xs text-slate-400 mt-1 leading-relaxed">
+            Link ini berisi <strong id="confirm-full-modal-count" class="text-amber-400">0 video</strong>. Mengunduh 1 playlist secara langsung akan memakan kuota, penyimpanan, dan antrean yang panjang.
+          </p>
+          <p class="text-xs text-slate-300 mt-2 font-medium">
+            Apakah Anda yakin ingin mengunduh seluruh playlist sekaligus, atau pilih beberapa lagu saja?
+          </p>
+        </div>
+      </div>
+
+      <div class="space-y-2 mb-4">
+        <button type="button" onclick="chooseModalCustomSelect()" class="w-full text-left p-3 rounded-xl bg-dark-900 border border-brand-500/40 hover:border-brand-500 hover:bg-brand-500/10 transition group cursor-pointer">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-brand-400 flex items-center gap-2">
+              <i class="fa-solid fa-list-check"></i> 📝 Pilih Video Tertentu Saja (Rekomendasi)
+            </span>
+            <span class="text-[10px] px-2 py-0.5 rounded-full bg-brand-500/20 text-brand-300 font-semibold">Bebas Pilih</span>
+          </div>
+          <p class="text-[11px] text-slate-400 mt-1">Centang hanya lagu yang Anda sukai tanpa perlu mendownload seluruh playlist.</p>
+        </button>
+
+        <button type="button" onclick="chooseModalSingleOnly()" class="w-full text-left p-3 rounded-xl bg-dark-900 border border-slate-750 hover:border-slate-600 hover:bg-dark-800 transition group cursor-pointer">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-slate-200 flex items-center gap-2">
+              <i class="fa-solid fa-bullseye"></i> 🎯 Hanya 1 Video Saja
+            </span>
+            <span class="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 font-semibold">1 Lagu</span>
+          </div>
+          <p class="text-[11px] text-slate-400 mt-1">Hanya unduh 1 video utama / pertama, abaikan seluruh sisa playlist.</p>
+        </button>
+      </div>
+
+      <div class="flex items-center justify-between border-t border-slate-800 pt-3">
+        <button type="button" onclick="closeConfirmFullModal()" class="text-xs px-4 py-2 rounded-xl bg-dark-800 hover:bg-dark-750 text-slate-400 hover:text-slate-200 border border-slate-750 transition">
+          Batal
+        </button>
+        <button type="button" onclick="proceedFullPlaylistDownload()" class="text-xs px-4 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 font-semibold transition flex items-center gap-1.5">
+          <i class="fa-solid fa-layer-group"></i> Tetap Unduh Seluruh Playlist
+        </button>
+      </div>
     </div>
   </div>
 

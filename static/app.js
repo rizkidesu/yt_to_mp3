@@ -1,3 +1,4 @@
+
 // YouTube to MP3 Studio - Client Application
 
 let currentTab = 'download';
@@ -8,6 +9,8 @@ let currentPlaylist = [];
 let currentTrackIndex = -1;
 let isAudioPlaying = false;
 let selectedLibraryFiles = new Set();
+let currentVideoInfoData = null;
+let selectedPlaylistItems = new Set();
 
 // Web Audio & Equalizer
 let audioCtx = null;
@@ -134,7 +137,7 @@ function initEventListeners() {
 // --- Navigation & Tabs ---
 function switchTab(tabName) {
   currentTab = tabName;
-  const tabs = ['download', 'tasks', 'library', 'urls'];
+  const tabs = ['download', 'tasks', 'library', 'urls', 'extension'];
 
   tabs.forEach(t => {
     const btn = document.getElementById(`tab-btn-${t}`);
@@ -212,28 +215,370 @@ async function fetchVideoInfo(url) {
     const data = await res.json();
 
     if (res.ok && (data.title || data.thumbnail)) {
+      currentVideoInfoData = data;
       if (data.title) previewTitle.textContent = data.title;
       previewUploader.textContent = data.uploader || 'YouTube';
       if (data.thumbnail) {
         previewThumb.src = data.thumbnail;
       }
+      const playlistBox = document.getElementById('playlist-options-box');
       if (data.is_playlist) {
-        previewType.textContent = `Playlist (${data.count} Video)`;
+        const videoCount = data.count || (data.entries ? data.entries.length : 1);
+        previewType.textContent = `Playlist (${videoCount} Video)`;
         previewDuration.textContent = 'Playlist';
+
+        if (playlistBox) {
+          playlistBox.classList.remove('hidden');
+          const countBadge = document.getElementById('playlist-count-badge');
+          if (countBadge) countBadge.textContent = `${videoCount} Video`;
+
+          const optSingleTitle = document.getElementById('opt-single-title');
+          const optSingleDesc = document.getElementById('opt-single-desc');
+          const radioSingle = document.querySelector('input[name="playlist-mode"][value="single"]');
+          const radioAll = document.querySelector('input[name="playlist-mode"][value="all"]');
+
+          if (data.has_single_video) {
+            if (optSingleTitle) optSingleTitle.textContent = '🎯 Hanya 1 Video Ini (Rekomendasi)';
+            if (optSingleDesc) optSingleDesc.textContent = 'Abaikan playlist. Hanya mengunduh 1 video lagu ini saja.';
+          } else {
+            if (optSingleTitle) optSingleTitle.textContent = '🎯 Hanya 1 Video Pertama (Rekomendasi)';
+            if (optSingleDesc) optSingleDesc.textContent = 'Abaikan sisa playlist. Hanya unduh 1 video pertama.';
+          }
+
+          // Prioritaskan single mode agar tidak download playlist penuh langsung
+          const chkIgnore = document.getElementById('chk-ignore-playlist');
+          const shouldIgnore = chkIgnore ? chkIgnore.checked : true;
+          if (shouldIgnore) {
+            if (radioSingle) radioSingle.checked = true;
+          } else {
+            if (radioAll) radioAll.checked = true;
+          }
+
+          onPlaylistModeRadioChange();
+        }
       } else {
         previewType.textContent = 'Video';
         previewDuration.textContent = data.duration_formatted || 'Video';
+        if (playlistBox) playlistBox.classList.add('hidden');
       }
     } else {
       if (!videoId) {
         previewCard.classList.add('hidden');
+        const playlistBox = document.getElementById('playlist-options-box');
+        if (playlistBox) playlistBox.classList.add('hidden');
       }
     }
   } catch (err) {
     if (!extractYouTubeId(url)) {
       previewCard.classList.add('hidden');
+      const playlistBox = document.getElementById('playlist-options-box');
+      if (playlistBox) playlistBox.classList.add('hidden');
     }
   }
+}
+
+// --- Playlist Handlers ---
+function onIgnorePlaylistToggle(checked) {
+  const radioSingle = document.querySelector('input[name="playlist-mode"][value="single"]');
+  const radioAll = document.querySelector('input[name="playlist-mode"][value="all"]');
+  if (checked && radioSingle) {
+    radioSingle.checked = true;
+  } else if (!checked && radioAll) {
+    radioAll.checked = true;
+  }
+  onPlaylistModeRadioChange();
+}
+
+function onPlaylistModeRadioChange() {
+  const mode = document.querySelector('input[name="playlist-mode"]:checked')?.value || 'single';
+  const optSingleCard = document.getElementById('opt-single-label-card');
+  const optCustomCard = document.getElementById('opt-custom-label-card');
+  const optAllCard = document.getElementById('opt-all-label-card');
+  const btnSubmit = document.getElementById('btn-submit-single');
+  const noticeText = document.getElementById('playlist-mode-notice-text');
+  const helperBtn = document.getElementById('btn-open-playlist-modal-helper');
+  const customCountBadge = document.getElementById('opt-custom-count-badge');
+
+  if (optSingleCard) {
+    optSingleCard.className = mode === 'single'
+      ? 'relative flex items-start gap-2.5 p-3 rounded-xl bg-dark-850 border border-brand-500 bg-brand-500/10 cursor-pointer transition ring-1 ring-brand-500/30'
+      : 'relative flex items-start gap-2.5 p-3 rounded-xl bg-dark-850 border border-slate-750 hover:border-slate-600 cursor-pointer transition';
+  }
+  if (optCustomCard) {
+    optCustomCard.className = mode === 'custom'
+      ? 'relative flex items-start gap-2.5 p-3 rounded-xl bg-dark-850 border border-emerald-500 bg-emerald-500/10 cursor-pointer transition ring-1 ring-emerald-500/30'
+      : 'relative flex items-start gap-2.5 p-3 rounded-xl bg-dark-850 border border-slate-750 hover:border-slate-600 cursor-pointer transition';
+  }
+  if (optAllCard) {
+    optAllCard.className = mode === 'all'
+      ? 'relative flex items-start gap-2.5 p-3 rounded-xl bg-dark-850 border border-amber-500 bg-amber-500/10 cursor-pointer transition ring-1 ring-amber-500/30'
+      : 'relative flex items-start gap-2.5 p-3 rounded-xl bg-dark-850 border border-slate-750 hover:border-slate-600 cursor-pointer transition';
+  }
+
+  const selCount = selectedPlaylistItems.size;
+  if (customCountBadge) {
+    if (selCount > 0) {
+      customCountBadge.textContent = `${selCount} dipilih`;
+      customCountBadge.classList.remove('hidden');
+    } else {
+      customCountBadge.classList.add('hidden');
+    }
+  }
+
+  const count = currentVideoInfoData?.count || (currentVideoInfoData?.entries ? currentVideoInfoData.entries.length : 0);
+
+  if (mode === 'single') {
+    if (noticeText) {
+      noticeText.innerHTML = `<i class="fa-solid fa-shield-check text-brand-400 mr-1.5"></i><span><strong>Mode Aman:</strong> Hanya 1 lagu yang akan diunduh ke MP3 (tidak mendownload 1 playlist langsung).</span>`;
+    }
+    if (helperBtn) helperBtn.classList.add('hidden');
+    if (btnSubmit) {
+      btnSubmit.innerHTML = `<i class="fa-solid fa-download"></i> Unduh 1 Video Ini (MP3)`;
+    }
+  } else if (mode === 'custom') {
+    if (noticeText) {
+      noticeText.innerHTML = selCount > 0
+        ? `<i class="fa-solid fa-list-check text-emerald-400 mr-1.5"></i><span><strong>${selCount} lagu</strong> dipilih dari ${count} video playlist.</span>`
+        : `<i class="fa-solid fa-list-check text-amber-400 mr-1.5"></i><span>Pilih video yang ingin diunduh agar tidak mendownload seluruh playlist.</span>`;
+    }
+    if (helperBtn) {
+      helperBtn.classList.remove('hidden');
+      helperBtn.innerHTML = `<i class="fa-solid fa-list-ul"></i> ${selCount > 0 ? 'Ubah Pilihan (' + selCount + ')' : 'Pilih Video...'}`;
+    }
+    if (btnSubmit) {
+      btnSubmit.innerHTML = selCount > 0
+        ? `<i class="fa-solid fa-download"></i> Unduh ${selCount} Lagu Terpilih`
+        : `<i class="fa-solid fa-list-check"></i> Pilih Video dari Playlist...`;
+    }
+    // Jika beralih ke mode custom dan belum ada lagu yang dipilih, buka modal pemilih lagu secara otomatis
+    if (selectedPlaylistItems.size === 0 && currentVideoInfoData?.entries?.length > 0) {
+      openPlaylistItemsModal();
+    }
+  } else if (mode === 'all') {
+    if (noticeText) {
+      noticeText.innerHTML = `<i class="fa-solid fa-triangle-exclamation text-amber-400 mr-1.5"></i><span><strong>Perhatian:</strong> Mengunduh seluruh playlist (${count} lagu) sekaligus. Konfirmasi akan diminta sebelum proses dimulai.</span>`;
+    }
+    if (helperBtn) helperBtn.classList.remove('hidden');
+    if (btnSubmit) {
+      btnSubmit.innerHTML = `<i class="fa-solid fa-layer-group"></i> Unduh Seluruh Playlist (${count} Lagu)`;
+    }
+  }
+}
+
+function openPlaylistItemsModal() {
+  if (!currentVideoInfoData || !currentVideoInfoData.entries || currentVideoInfoData.entries.length === 0) {
+    showToast('Daftar video playlist tidak tersedia atau masih memuat.', 'warning');
+    return;
+  }
+
+  const modal = document.getElementById('playlist-items-modal');
+  const totalBadge = document.getElementById('modal-playlist-total');
+  const btnCurrentOnly = document.getElementById('btn-select-current-only');
+
+  totalBadge.textContent = `${currentVideoInfoData.entries.length} Lagu`;
+  if (currentVideoInfoData.has_single_video) {
+    btnCurrentOnly.classList.remove('hidden');
+  } else {
+    btnCurrentOnly.classList.add('hidden');
+  }
+
+  selectedPlaylistItems.clear();
+  if (currentVideoInfoData.has_single_video) {
+    currentVideoInfoData.entries.forEach(e => {
+      if (e.is_current) selectedPlaylistItems.add(e.id);
+    });
+    if (selectedPlaylistItems.size === 0 && currentVideoInfoData.entries[0]) {
+      selectedPlaylistItems.add(currentVideoInfoData.entries[0].id);
+    }
+  } else {
+    currentVideoInfoData.entries.forEach(e => selectedPlaylistItems.add(e.id));
+  }
+
+  renderPlaylistItemsList();
+  modal.classList.remove('hidden');
+}
+
+function closePlaylistItemsModal() {
+  const modal = document.getElementById('playlist-items-modal');
+  if (modal) modal.classList.add('hidden');
+}
+
+function renderPlaylistItemsList() {
+  const container = document.getElementById('playlist-items-container');
+  if (!container || !currentVideoInfoData) return;
+
+  const entries = currentVideoInfoData.entries || [];
+  container.innerHTML = entries.map((item) => {
+    const isChecked = selectedPlaylistItems.has(item.id);
+    return `
+      <div class="flex items-center gap-3 p-2.5 rounded-xl border transition ${isChecked ? 'bg-brand-500/10 border-brand-500/40' : 'bg-dark-900 border-slate-800 hover:border-slate-700'}">
+        <label class="flex items-center cursor-pointer select-none" onclick="event.stopPropagation()">
+          <input type="checkbox" data-id="${item.id}" ${isChecked ? 'checked' : ''} 
+            onchange="onPlaylistItemCheckChange('${item.id}', this.checked)"
+            class="rounded border-slate-700 bg-dark-800 text-brand-600 focus:ring-brand-500 w-4 h-4 cursor-pointer">
+        </label>
+        <div class="relative w-12 h-8 rounded overflow-hidden bg-slate-800 shrink-0">
+          <img src="${item.thumbnail || ''}" alt="" class="w-full h-full object-cover" onerror="this.style.display='none'">
+        </div>
+        <div class="flex-1 min-w-0 cursor-pointer" onclick="togglePlaylistItem('${item.id}')">
+          <div class="flex items-center gap-2">
+            <span class="text-xs text-slate-500 font-mono">#${item.index}</span>
+            <p class="text-xs font-semibold text-slate-200 truncate ${item.is_current ? 'text-brand-400' : ''}">
+              ${item.title}
+              ${item.is_current ? '<span class="ml-1 text-[9px] px-1.5 py-0.2 rounded bg-brand-500/20 text-brand-400 font-bold">Saat Ini</span>' : ''}
+            </p>
+          </div>
+          <span class="text-[10px] text-slate-400 font-mono">${item.duration_formatted || '--:--'}</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  updatePlaylistModalCounters();
+}
+
+function togglePlaylistItem(id) {
+  if (selectedPlaylistItems.has(id)) {
+    selectedPlaylistItems.delete(id);
+  } else {
+    selectedPlaylistItems.add(id);
+  }
+  renderPlaylistItemsList();
+}
+
+function onPlaylistItemCheckChange(id, checked) {
+  if (checked) {
+    selectedPlaylistItems.add(id);
+  } else {
+    selectedPlaylistItems.delete(id);
+  }
+  updatePlaylistModalCounters();
+}
+
+function updatePlaylistModalCounters() {
+  const count = selectedPlaylistItems.size;
+  const countEl = document.getElementById('modal-selected-count');
+  const submitCountEl = document.getElementById('modal-submit-count');
+  const selectAllChk = document.getElementById('modal-select-all-playlist');
+  const total = currentVideoInfoData?.entries?.length || 0;
+
+  if (countEl) countEl.textContent = count;
+  if (submitCountEl) submitCountEl.textContent = count;
+  if (selectAllChk) selectAllChk.checked = (total > 0 && count === total);
+}
+
+function toggleSelectAllPlaylistItems(checked) {
+  if (!currentVideoInfoData?.entries) return;
+  if (checked) {
+    currentVideoInfoData.entries.forEach(e => selectedPlaylistItems.add(e.id));
+  } else {
+    selectedPlaylistItems.clear();
+  }
+  renderPlaylistItemsList();
+}
+
+function selectOnlyCurrentPlaylistItem() {
+  if (!currentVideoInfoData?.single_video_id) return;
+  selectedPlaylistItems.clear();
+  selectedPlaylistItems.add(currentVideoInfoData.single_video_id);
+  renderPlaylistItemsList();
+}
+
+async function downloadSelectedPlaylistItems() {
+  if (selectedPlaylistItems.size === 0) {
+    showToast('Pilih minimal 1 video untuk diunduh.', 'warning');
+    return;
+  }
+
+  const qualityRadio = document.querySelector('input[name="quality-single"]:checked');
+  const quality = qualityRadio ? qualityRadio.value : '192';
+
+  const urlsToDownload = Array.from(selectedPlaylistItems).map(id => `https://www.youtube.com/watch?v=${id}`);
+
+  const btn = document.getElementById('btn-download-selected-playlist');
+  const originalHtml = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Menambahkan...';
+
+  try {
+    const res = await fetch('/api/download', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        urls: urlsToDownload,
+        quality,
+        no_playlist: true
+      })
+    });
+    const data = await res.json();
+    if (res.ok && data.success) {
+      showToast(`Berhasil menambahkan ${data.count} lagu dari playlist ke antrean!`, 'success');
+      closePlaylistItemsModal();
+      document.getElementById('single-url-input').value = '';
+      document.getElementById('video-preview-card').classList.add('hidden');
+      const playlistBox = document.getElementById('playlist-options-box');
+      if (playlistBox) playlistBox.classList.add('hidden');
+      currentVideoInfoData = null;
+      switchTab('tasks');
+      fetchTasks();
+    } else {
+      showToast(data.error || 'Gagal menambahkan tugas unduhan.', 'error');
+    }
+  } catch (err) {
+    showToast('Terjadi kesalahan jaringan.', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = originalHtml;
+  }
+}
+
+// --- Playlist Selection & Confirmation Helpers ---
+function savePlaylistSelectionAndClose() {
+  closePlaylistItemsModal();
+  const radioCustom = document.querySelector('input[name="playlist-mode"][value="custom"]');
+  if (radioCustom) radioCustom.checked = true;
+  onPlaylistModeRadioChange();
+  if (selectedPlaylistItems.size > 0) {
+    showToast(`Pilihan disimpan: ${selectedPlaylistItems.size} lagu terpilih.`, 'success');
+  }
+}
+
+function openConfirmFullModal() {
+  const modal = document.getElementById('playlist-confirm-full-modal');
+  const countEl = document.getElementById('confirm-full-modal-count');
+  const count = currentVideoInfoData?.count || (currentVideoInfoData?.entries ? currentVideoInfoData.entries.length : 0);
+  if (countEl) countEl.textContent = `${count} video`;
+  if (modal) modal.classList.remove('hidden');
+}
+
+function closeConfirmFullModal() {
+  const modal = document.getElementById('playlist-confirm-full-modal');
+  if (modal) modal.classList.add('hidden');
+}
+
+function chooseModalCustomSelect() {
+  closeConfirmFullModal();
+  const radioCustom = document.querySelector('input[name="playlist-mode"][value="custom"]');
+  if (radioCustom) radioCustom.checked = true;
+  onPlaylistModeRadioChange();
+  openPlaylistItemsModal();
+}
+
+function chooseModalSingleOnly() {
+  closeConfirmFullModal();
+  const radioSingle = document.querySelector('input[name="playlist-mode"][value="single"]');
+  if (radioSingle) radioSingle.checked = true;
+  onPlaylistModeRadioChange();
+  showToast('Dialihkan ke mode unduh 1 video saja (bebas antrean).', 'info');
+}
+
+function proceedFullPlaylistDownload() {
+  closeConfirmFullModal();
+  const urlInput = document.getElementById('single-url-input');
+  const url = urlInput.value.trim();
+  const qualityRadio = document.querySelector('input[name="quality-single"]:checked');
+  const quality = qualityRadio ? qualityRadio.value : '192';
+  executeSingleDownload(url, quality, false);
 }
 
 // --- Clipboard Helper ---
@@ -251,7 +596,7 @@ async function pasteToSingleInput() {
 // --- Single Download Handler ---
 async function startSingleDownload() {
   const urlInput = document.getElementById('single-url-input');
-  const url = urlInput.value.trim();
+  let url = urlInput.value.trim();
   if (!url) {
     showToast('Silakan masukkan URL video YouTube terlebih dahulu.', 'warning');
     return;
@@ -259,7 +604,36 @@ async function startSingleDownload() {
 
   const qualityRadio = document.querySelector('input[name="quality-single"]:checked');
   const quality = qualityRadio ? qualityRadio.value : '192';
+  const playlistMode = document.querySelector('input[name="playlist-mode"]:checked')?.value || 'single';
 
+  // Jika URL yang dimasukkan terdeteksi sebagai playlist:
+  if (currentVideoInfoData?.is_playlist) {
+    if (playlistMode === 'custom') {
+      if (selectedPlaylistItems.size === 0) {
+        openPlaylistItemsModal();
+        showToast('Silakan centang video yang ingin Anda unduh dari daftar playlist.', 'info');
+        return;
+      }
+      return downloadSelectedPlaylistItems();
+    } else if (playlistMode === 'all') {
+      // Tampilkan dialog konfirmasi agar pengguna tidak mendownload seluruh playlist langsung secara tidak sengaja
+      openConfirmFullModal();
+      return;
+    } else {
+      // mode === 'single' (Hanya 1 video)
+      if (currentVideoInfoData.has_single_video && currentVideoInfoData.single_video_url) {
+        url = currentVideoInfoData.single_video_url;
+      } else if (currentVideoInfoData.entries && currentVideoInfoData.entries[0]?.url) {
+        url = currentVideoInfoData.entries[0].url;
+      }
+    }
+  }
+
+  executeSingleDownload(url, quality, true);
+}
+
+async function executeSingleDownload(url, quality, noPlaylist) {
+  const urlInput = document.getElementById('single-url-input');
   const btn = document.getElementById('btn-submit-single');
   const originalHtml = btn.innerHTML;
   btn.disabled = true;
@@ -269,14 +643,21 @@ async function startSingleDownload() {
     const res = await fetch('/api/download', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ urls: [url], quality })
+      body: JSON.stringify({ urls: [url], quality, no_playlist: noPlaylist })
     });
     const data = await res.json();
 
     if (res.ok && data.success) {
-      showToast('Berhasil menambahkan lagu ke antrean unduhan!', 'success');
+      const msg = noPlaylist 
+        ? 'Berhasil menambahkan 1 lagu ke antrean unduhan (Playlist diabaikan)!' 
+        : `Berhasil menambahkan seluruh playlist (${data.count} tugas) ke antrean!`;
+      showToast(msg, 'success');
       urlInput.value = '';
       document.getElementById('video-preview-card').classList.add('hidden');
+      const playlistBox = document.getElementById('playlist-options-box');
+      if (playlistBox) playlistBox.classList.add('hidden');
+      currentVideoInfoData = null;
+      selectedPlaylistItems.clear();
       switchTab('tasks');
       fetchTasks();
     } else {
@@ -348,6 +729,9 @@ async function startBatchDownload() {
   }
 
   const quality = document.getElementById('quality-batch').value || '192';
+  const chkBatchIgnore = document.getElementById('batch-ignore-playlist');
+  const noPlaylist = chkBatchIgnore ? chkBatchIgnore.checked : true;
+
   const btn = document.getElementById('btn-submit-batch');
   const originalHtml = btn.innerHTML;
   btn.disabled = true;
@@ -357,7 +741,7 @@ async function startBatchDownload() {
     const res = await fetch('/api/download', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ urls: urls, quality })
+      body: JSON.stringify({ urls: urls, quality, no_playlist: noPlaylist })
     });
     const data = await res.json();
 
@@ -1066,15 +1450,21 @@ async function downloadAllFromUrlsTxtEditor() {
     return;
   }
 
+  const chkIgnore = document.getElementById('chk-urls-ignore-playlist');
+  const noPlaylist = chkIgnore ? chkIgnore.checked : true;
+
   try {
     const res = await fetch('/api/download', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ urls, quality: '192' })
+      body: JSON.stringify({ urls, quality: '192', no_playlist: noPlaylist })
     });
     const data = await res.json();
     if (res.ok && data.success) {
-      showToast(`Memulai unduhan untuk ${data.count} lagu!`, 'success');
+      const msg = noPlaylist
+        ? `Memulai unduhan untuk ${data.count} lagu (Playlist diabaikan)!`
+        : `Memulai unduhan untuk ${data.count} link (Termasuk playlist penuh)!`;
+      showToast(msg, 'success');
       switchTab('tasks');
       fetchTasks();
     } else {
@@ -1268,6 +1658,40 @@ function applyEqualizerPreset(presetName) {
   saveEqualizerSettings(presetName);
 }
 
+function quickAdjustEq(type) {
+  initWebAudio();
+  if (type === 'bass') {
+    currentEqGains[0] = Math.min(12, Math.round((currentEqGains[0] + 3) * 2) / 2);
+    currentEqGains[1] = Math.min(12, Math.round((currentEqGains[1] + 2) * 2) / 2);
+  } else if (type === 'vocal') {
+    currentEqGains[3] = Math.min(12, Math.round((currentEqGains[3] + 3) * 2) / 2);
+  } else if (type === 'treble') {
+    currentEqGains[4] = Math.min(12, Math.round((currentEqGains[4] + 2) * 2) / 2);
+    currentEqGains[5] = Math.min(12, Math.round((currentEqGains[5] + 3) * 2) / 2);
+  } else if (type === 'loudness') {
+    currentEqGains = [6, 4, -1, 0, 3, 5];
+  }
+
+  currentEqGains.forEach((g, idx) => {
+    const slider = document.getElementById(`eq-slider-${idx}`);
+    if (slider) slider.value = g;
+
+    const readout = document.getElementById(`gain-val-${idx}`);
+    if (readout) {
+      readout.textContent = (g > 0 ? `+${g}` : `${g}`) + 'dB';
+      readout.className = g === 0 ? 'text-[10px] font-mono text-slate-400' : 'text-[10px] font-mono text-brand-400 font-bold';
+    }
+
+    if (eqFilters[idx] && isEqEnabled) {
+      eqFilters[idx].gain.value = g;
+    }
+  });
+
+  const presetSelect = document.getElementById('eq-preset-select');
+  if (presetSelect) presetSelect.value = 'custom';
+  saveEqualizerSettings('custom');
+}
+
 function resetEqualizer() {
   const presetSelect = document.getElementById('eq-preset-select');
   if (presetSelect) presetSelect.value = 'flat';
@@ -1358,3 +1782,72 @@ function loadEqualizerSettings() {
     console.error('Error loading equalizer settings:', e);
   }
 }
+
+// --- Browser Launcher & Extension Helpers ---
+async function openYouTubeInBrowser(browser = 'default') {
+  // 1. Langsung buka di tab browser pengguna
+  window.open('https://www.youtube.com', '_blank');
+  showToast('Membuka YouTube di browser Anda...', 'info');
+
+  // 2. Kirim sinyal ke server backend (jika dijalankan langsung di host)
+  try {
+    const res = await fetch('/api/open-browser', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: 'https://www.youtube.com', browser: browser })
+    });
+    const data = await res.json();
+    if (data.opened_on_server) {
+      showToast('Browser favorit dibuka di desktop host!', 'success');
+    }
+  } catch (e) {
+    // Abaikan jika offline / koneksi lokal
+  }
+}
+
+function copyTextToClipboard(text, successMsg = 'Teks berhasil disalin!') {
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(() => {
+      showToast(successMsg, 'success');
+    }).catch(() => fallbackCopy(text, successMsg));
+  } else {
+    fallbackCopy(text, successMsg);
+  }
+}
+
+function fallbackCopy(text, successMsg) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.focus();
+  ta.select();
+  try {
+    document.execCommand('copy');
+    showToast(successMsg, 'success');
+  } catch (e) {
+    showToast('Gagal menyalin otomatis. Silakan salin manual.', 'error');
+  }
+  document.body.removeChild(ta);
+}
+
+function copyExtensionPath() {
+  const path = '/home/diablo/Documents/docker/youtube_to_mp3/extension';
+  copyTextToClipboard(path, 'Path folder ekstensi berhasil disalin ke clipboard!');
+}
+
+async function copyUserscriptCode() {
+  try {
+    const res = await fetch('/extension/youtube-to-mp3-studio.user.js');
+    if (res.ok) {
+      const code = await res.text();
+      copyTextToClipboard(code, 'Kode Userscript berhasil disalin ke clipboard!');
+    } else {
+      showToast('Gagal memuat kode Userscript.', 'error');
+    }
+  } catch (e) {
+    showToast('Gagal mengambil kode Userscript.', 'error');
+  }
+}
+

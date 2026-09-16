@@ -49,6 +49,26 @@ Aplikasi web modern berbasis Docker untuk mengunduh audio YouTube dan mengonvers
 - Menggunakan Tailwind CSS dan FontAwesome dengan palet dark mode premium.
 - Tampilan optimal di PC desktop, laptop, tablet, maupun smartphone.
 
+### 6. 🧩 Ekstensi Browser & Launcher YouTube (Unduh Mirip Ekstensi)
+- **Unduh Langsung dari Halaman YouTube**:
+  - Tombol merah **"🎵 Unduh MP3"** disisipkan otomatis tepat di bawah video YouTube (sebelah tombol Like/Share).
+  - Pilihan kualitas audio langsung di dropdown: 320 kbps (Ultra HQ), 256 kbps, 192 kbps, 128 kbps.
+  - Toast notifikasi live progress unduhan langsung di layar YouTube.
+- **Ekstensi Browser (Manifest V3)**:
+  - Tersedia di folder `extension/` (Google Chrome, Brave Browser, Microsoft Edge, Opera, Vivaldi).
+  - Toolbar Popup dengan deteksi otomatis video YouTube yang sedang aktif dan status server.
+  - Menu Klik Kanan (Context Menu) pada link video YouTube: *"🎵 Unduh MP3 ke Studio"*.
+- **Userscript Tampermonkey / Violentmonkey**:
+  - 1-Klik install via `http://localhost:5000/extension/youtube-to-mp3-studio.user.js`.
+- **Launcher Otomatis Host**:
+  - Buka browser favorit langsung ke YouTube via skrip:
+    ```bash
+    ./open_youtube.sh
+    # atau
+    python3 open_youtube.py
+    ```
+  - Atau klik tombol **"Buka YouTube"** di antarmuka Web Studio.
+
 ---
 
 ## 🚀 Cara Menjalankan
