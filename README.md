@@ -1,77 +1,79 @@
-# 🎵 YouTube to MP3 Studio (Web & Docker)
+# 🎵 YouTube to MP3 Studio (Web, Docker & Browser Extension)
 
-Aplikasi web modern berbasis Docker untuk mengunduh audio YouTube dan mengonversinya langsung ke format MP3 berkualitas tinggi dengan antarmuka gelap yang elegan, pemutar musik terintegrasi, dan manajemen unduhan yang lengkap.
+Aplikasi web modern berbasis Docker untuk mengunduh audio YouTube dan mengonversinya langsung ke format MP3 berkualitas tinggi. Dilengkapi dengan antarmuka gelap (*dark mode*) yang elegan, pemutar musik web terintegrasi, **6-Band Graphic Equalizer vertikal**, sistem proteksi playlist, serta **Ekstensi Browser & Userscript YouTube** untuk kemudahan unduh 1-klik langsung dari YouTube.
 
 ---
 
-## ✨ Fitur Utama
+## ✨ Fitur Unggulan
 
-### 1. 📥 Pengunduhan Fleksibel (Single & Batch)
-- **Mode Satu Lagu**:
-  - Tempelkan URL YouTube, otomatis menampilkan pratinjau (*preview*) judul lagu, nama channel, durasi, dan thumbnail video.
-  - Pilihan kualitas audio: **320 kbps (Ultra HQ)**, **256 kbps (HQ)**, **192 kbps (Standar)**, **128 kbps (Hemat Kuota)**.
-- **Mode Banyak Lagu (Batch)**:
-  - Input puluhan hingga ratusan URL YouTube sekaligus (satu URL per baris).
-  - **Upload File `.txt`**: Unggah langsung file daftar URL dari komputer/HP Anda dengan 1 klik.
-  - **Drag & Drop**: Tarik dan lepaskan file `.txt` langsung ke dalam kotak input.
+### 1. 📥 Pengunduhan Audio Fleksibel (Single & Batch)
+- **Mode Satu Lagu (Single URL)**:
+  - Tempelkan URL YouTube, sistem otomatis menampilkan pratinjau (*preview*) judul, channel, durasi, dan thumbnail video.
+  - Pilihan kualitas bitrate MP3: **320 kbps (Ultra HQ)**, **256 kbps (HQ)**, **192 kbps (Standar)**, **128 kbps (Hemat Kuota)**.
+- **Mode Banyak Lagu (Batch Download)**:
+  - Input puluhan hingga ratusan URL YouTube sekaligus (satu baris per URL).
+  - **Upload File `.txt`**: Unggah langsung file teks dari perangkat Anda.
   - **Impor dari `urls.txt`**: Muat daftar URL yang tersimpan di server secara instan.
-  - Indikator otomatis jumlah URL valid yang terdeteksi.
+  - Indikator penghitung otomatis jumlah URL valid.
 
-### 2. ⚡ Antrean & Pemantauan Progres Realtime
-- Multi-threaded background downloader (yt-dlp + FFmpeg).
-- Pemantauan progres unduhan realtime dengan *live progress bar*, kecepatan transfer (Speed), estimasi waktu selesai (ETA), dan status ekstraksi audio.
-- Riwayat tugas unduhan sukses atau gagal, dilengkapi tombol **Bersihkan Riwayat**.
+### 2. 🛡️ Mode Aman: Opsi "Jangan Unduh 1 Playlist Langsung"
+Seringkali link video YouTube yang disalin dari halaman rekomendasi atau mix mengandung parameter playlist (`&list=PL...` atau `&list=RD...`). Aplikasi ini dilengkapi perlindungan cerdas agar tidak sengaja mengunduh puluhan lagu sekaligus:
+- **Di Web Studio (Mode Single & Batch & urls.txt)**:
+  - Terdapat checkbox aktif: `[✓] Jangan unduh 1 playlist langsung (Hanya unduh 1 video tunggal)`.
+  - Jika link playlist dimasukkan, sistem otomatis memunculkan 3 pilihan:
+    1. 🎯 **Hanya 1 Video Saja (Rekomendasi - Default)**: Mengabaikan playlist dan hanya mengunduh 1 video lagu tersebut.
+    2. 📝 **Pilih Lagu Tertentu**: Membuka modal daftar video agar Anda dapat mencentang lagu mana saja yang ingin diunduh.
+    3. 📑 **Unduh Seluruh Playlist**: Konfirmasi ganda akan diminta sebelum proses dimulai.
+- **Di YouTube Langsung (Ekstensi & Userscript)**:
+  - Muncul dialog konfirmasi instan saat mengklik tombol unduh pada video yang merupakan bagian dari playlist.
+  - Dilengkapi opsi *"Ingat pilihan saya"*.
 
-### 3. 🎶 Koleksi Musik & Web Audio Player
-- **In-Browser Audio Player**: Putar lagu langsung di web tanpa aplikasi pihak ketiga.
-  - Kontrol: Play/Pause, Next Track, Previous Track, Seekbar scrub, Pengatur Volume & Mute.
-- **🎚️ 6-Band Audio Equalizer**:
-  - Berbasis **Web Audio API** (`BiquadFilterNode`) dengan kontrol frekuensi 6-Band: 60Hz (Sub-Bass), 170Hz (Bass), 350Hz (Low-Mid), 1kHz (Mid/Vokal), 3.5kHz (Presence), dan 12kHz (Treble).
-  - Rentang gain `-12 dB` s/d `+12 dB` dengan indikator dB dinamis.
-  - **10 Preset Audio Siap Pakai**: Datar (Flat), Dangdut / Kendang Mantap 🔥, Bass Boost 🔊, Vocal Booster 🎤, Rock 🎸, Pop 🎧, Electronic / EDM ⚡, Jazz 🎷, Akustik 🎶, dan Treble Boost ✨.
-  - Sakelar Power/Bypass untuk pengujian komparasi audio secara instan.
-  - Pengaturan equalizer tersimpan otomatis di browser (`localStorage`).
-- **Pilih Dulu Baru Dihapus (Bulk / Multi-Select Delete)**:
-  - Kotak centang (*checkbox*) di setiap item lagu.
-  - Tombol **"Pilih Semua"** untuk mencentang seluruh lagu yang tampil sekaligus.
-  - Counter lagu terpilih realtime.
-  - Tombol **"Hapus Terpilih"** dengan dialog konfirmasi keamanan agar tidak salah hapus.
-- **Download Langsung**:
-  - Unduh per file ke perangkat Anda.
-  - Tombol **"Download Semua (.ZIP)"** untuk mengemas seluruh koleksi lagu ke dalam 1 file zip.
-- **Pencarian Cepat**: Filter lagu berdasarkan judul atau nama file secara langsung (*instant search*).
+### 3. 🎚️ 6-Band Graphic Equalizer Vertikal & Web Audio Player
+- **In-Browser Audio Player**: Putar lagu hasil unduhan langsung di web tanpa aplikasi pihak ketiga.
+  - Kontrol: Play/Pause, Next/Prev Track, Seekbar scrub, Volume & Mute.
+- **Graphic Equalizer Vertikal Berbasis Web Audio API**:
+  - Menggunakan fader vertikal tegak berjajar dari kiri ke kanan layaknya studio mixer audio profesional.
+  - Rentang 6-Band frekuensi: **60Hz** (Sub-Bass), **170Hz** (Bass), **350Hz** (Low-Mid), **1kHz** (Mid/Vocal), **3.5kHz** (Presence), dan **12kHz** (Treble).
+  - Rentang penguatan: `-12 dB` hingga `+12 dB` dengan indikator angka desibel dinamis.
+  - **Volume Boost**: Penguat volume hingga 300%.
+  - **10 Preset Audio Siap Pakai**: Datar (Flat), Dangdut / Kendang Mantap 🔥, Bass Boost 🔊, Vocal Booster 🎤, Rock 🎸, Pop 🎧, Electronic / EDM ⚡, Jazz 🎷, Akustik 🎶, Treble Boost ✨.
+  - Sakelar Power/Bypass instan untuk membandingkan kualitas audio asli vs ter-equalize.
+  - Tersedia konsisten di: **Web Player**, **Popup Ekstensi**, dan **Floating Panel YouTube**.
 
-### 4. 📝 Kelola File `urls.txt` Terintegrasi
-- Editor teks terintegrasi di browser untuk melihat dan mengedit file `urls.txt` yang tersimpan di server.
-- Tombol **Simpan File** dan **Unduh Semua Baris Ini** langsung dari tab editor.
+### 4. 🎶 Manajemen Koleksi Musik (Library)
+- **Multi-Select Bulk Action**:
+  - Kotak centang (*checkbox*) di setiap lagu dengan tombol *"Pilih Semua"*.
+  - **Hapus Terpilih**: Menghapus beberapa lagu sekaligus dengan konfirmasi keamanan.
+  - **Download Terpilih (.ZIP)**: Mengemas lagu-lagu terpilih ke dalam 1 file zip.
+- **Download Semua (.ZIP)**: Unduh seluruh koleksi lagu dalam sekali klik.
+- **Pencarian Cepat**: Filter lagu berdasarkan judul atau nama file secara realtime.
 
-### 5. 📱 Desain Responsif & Dark Mode
-- Menggunakan Tailwind CSS dan FontAwesome dengan palet dark mode premium.
-- Tampilan optimal di PC desktop, laptop, tablet, maupun smartphone.
-
-### 6. 🧩 Ekstensi Browser & Launcher YouTube (Unduh Mirip Ekstensi)
-- **Unduh Langsung dari Halaman YouTube**:
-  - Tombol merah **"🎵 Unduh MP3"** disisipkan otomatis tepat di bawah video YouTube (sebelah tombol Like/Share).
-  - Pilihan kualitas audio langsung di dropdown: 320 kbps (Ultra HQ), 256 kbps, 192 kbps, 128 kbps.
-  - Toast notifikasi live progress unduhan langsung di layar YouTube.
+### 5. 🧩 Ekstensi Browser & Userscript YouTube
+- **Unduh Langsung dari YouTube**:
+  - Tombol merah **"🎵 Unduh MP3"** otomatis disisipkan di bawah video YouTube dan floating button di pojok kanan bawah.
+  - Pilihan kualitas bitrate langsung di menu dropdown.
+  - Live toast notifikasi progres unduhan langsung di layar YouTube.
 - **Ekstensi Browser (Manifest V3)**:
-  - Tersedia di folder `extension/` (Google Chrome, Brave Browser, Microsoft Edge, Opera, Vivaldi).
-  - Toolbar Popup dengan deteksi otomatis video YouTube yang sedang aktif dan status server.
-  - Menu Klik Kanan (Context Menu) pada link video YouTube: *"🎵 Unduh MP3 ke Studio"*.
-- **Userscript Tampermonkey / Violentmonkey**:
-  - 1-Klik install via `http://localhost:5000/extension/youtube-to-mp3-studio.user.js`.
-- **Launcher Otomatis Host**:
-  - Buka browser favorit langsung ke YouTube via skrip:
+  - Kompatibel dengan Google Chrome, Brave Browser, Microsoft Edge, Opera, dan Vivaldi.
+  - Dilengkapi popup kontrol Equalizer, status server, dan tombol unduh cepat.
+  - Paket ekstensi siap unduh dalam format `.zip` langsung dari Web Studio.
+- **Userscript (Tampermonkey / Violentmonkey)**:
+  - Pemasangan mudah 1-klik melalui URL script server lokal.
+- **Browser Launcher Otomatis**:
+  - Buka browser favorit langsung ke YouTube dengan server Docker siap di background:
     ```bash
     ./open_youtube.sh
     # atau
     python3 open_youtube.py
     ```
-  - Atau klik tombol **"Buka YouTube"** di antarmuka Web Studio.
+
+### 6. 📝 Manajemen `urls.txt` Terintegrasi
+- Editor teks terintegrasi di browser untuk membaca dan mengedit file `urls.txt` di server secara langsung.
+- Tombol **Simpan File** dan **Unduh Semua Baris Ini** (dilengkapi opsi abaikan playlist).
 
 ---
 
-## 🚀 Cara Menjalankan
+## 🚀 Panduan Instalasi & Menjalankan
 
 ### Persyaratan Sistem
 - [Docker](https://docs.docker.com/get-docker/) & [Docker Compose](https://docs.docker.com/compose/)
@@ -79,135 +81,189 @@ Aplikasi web modern berbasis Docker untuk mengunduh audio YouTube dan mengonvers
 
 ---
 
-### 1. Menjalankan dengan Docker Compose (Sangat Direkomendasikan)
+### Cara 1: Menggunakan Docker Compose (Sangat Direkomendasikan)
 
-1. Jalankan container di background:
+1. **Jalankan Container di Background**:
    ```bash
    docker compose up -d
    ```
 
-2. Buka browser dan akses antarmuka web:
+2. **Buka Web Studio di Browser**:
    ```
    http://localhost:5000
    ```
-   > 💡 **Akses dari HP / Perangkat Lain**: Pastikan berada di jaringan Wi-Fi yang sama, lalu buka `http://<IP-KOMPUTER-ANDA>:5000` (contoh: `http://192.168.1.10:5000`).
+   > 💡 **Akses dari HP / Laptop Lain di Jaringan yang Sama**: Buka `http://<IP-KOMPUTER-ANDA>:5000` (contoh: `http://192.168.1.15:5000`).
 
-3. Melihat log aktivitas container:
+3. **Melihat Log Aktivitas**:
    ```bash
    docker compose logs -f
    ```
 
-4. Menghentikan container:
-   ```bash
-   docker compose down
-   ```
-
-5. Me-restart container jika mengubah konfigurasi:
+4. **Me-restart Container**:
    ```bash
    docker compose restart
    ```
 
+5. **Menghentikan Container**:
+   ```bash
+   docker compose down
+   ```
+
 ---
 
-### 2. Menjalankan Tanpa Docker (Lokal / Mode Virtualenv)
+### Cara 2: Menjalankan Tanpa Docker (Lokal / Mode Virtualenv)
 
-1. Pastikan **FFmpeg** sudah terpasang di sistem:
+1. **Pasang FFmpeg**:
    ```bash
    # Ubuntu / Debian
    sudo apt update && sudo apt install ffmpeg -y
    ```
 
-2. Buat virtual environment dan pasang dependensi:
+2. **Siapkan Virtual Environment & Pasang Dependensi**:
    ```bash
    python3 -m venv venv
    source venv/bin/activate
    pip install -r requirements.txt
    ```
 
-3. Jalankan aplikasi:
+3. **Jalankan Server**:
    ```bash
-   # Mode Web UI (Default)
+   # Mode Web UI
    python apps.py
 
-   # Atau Mode CLI Tradisional (Membaca file urls.txt di terminal)
+   # Atau Mode CLI (Unduh langsung dari urls.txt di terminal)
    python apps.py --cli
    ```
 
 ---
 
-## 📂 Struktur Proyek
+## 🧩 Cara Memasang Ekstensi Browser
+
+### Opsi A: Ekstensi Browser (Google Chrome / Brave / Edge)
+1. Buka Web Studio di `http://localhost:5000` dan masuk ke tab **🧩 Ekstensi Browser**.
+2. Klik tombol **"Download Ekstensi (.zip)"**, lalu ekstrak file zip tersebut di komputer Anda (atau gunakan folder `extension/` dari repositori ini).
+3. Buka halaman ekstensi di browser Anda:
+   - Chrome / Brave: `chrome://extensions`
+   - Edge: `edge://extensions`
+4. Aktifkan **Developer mode** (Mode Pengembang) di pojok kanan atas.
+5. Klik **Load unpacked** (Muat yang belum dibongkar), lalu pilih folder `extension/`.
+6. Ikon **YouTube to MP3 Studio** akan muncul di toolbar browser Anda.
+
+### Opsi B: Userscript (Tampermonkey / Violentmonkey)
+1. Pasang ekstensi [Tampermonkey](https://www.tampermonkey.net/) atau Violentmonkey di browser Anda.
+2. Akses URL berikut di browser:
+   ```
+   http://localhost:5000/extension/youtube-to-mp3-studio.user.js
+   ```
+3. Klik tombol **Install**.
+4. Buka video YouTube apa pun, tombol merah **"🎵 Unduh MP3"** dan tombol **"🎚️ Equalizer"** akan otomatis muncul di bawah video.
+
+---
+
+## 📂 Struktur Direktori Proyek
 
 ```
 youtube_to_mp3/
-├── apps.py                  # Server backend Flask & pengelola unduhan yt-dlp
-├── docker-compose.yml       # Konfigurasi orkestrasi container Docker
-├── Dockerfile               # Konfigurasi image Docker (Alpine/Python + FFmpeg)
+├── apps.py                  # Backend Flask, yt-dlp worker queue, FFmpeg extractor, REST API
+├── docker-compose.yml       # Konfigurasi container Docker & volume binding
+├── Dockerfile               # Spesifikasi image container (Python 3.12 + FFmpeg)
 ├── requirements.txt         # Dependensi Python (Flask, yt-dlp)
-├── urls.txt                 # File daftar URL YouTube default
-├── .gitignore               # Aturan file yang diabaikan oleh Git
-├── .dockerignore            # File yang diabaikan saat build Docker
-├── downloads/               # Direktori penyimpanan hasil konversi MP3
-│   └── .gitkeep             # File penanda agar folder tetap terlacak di Git
+├── urls.txt                 # File penyimpanan daftar link YouTube lokal
+├── open_youtube.py          # Python launcher browser favorit otomatis ke YouTube
+├── open_youtube.sh          # Bash script launcher
+├── .gitignore               # Aturan file yang diabaikan git
+├── .dockerignore            # Aturan file yang diabaikan saat build Docker
+├── downloads/               # Folder penyimpanan hasil konversi file audio MP3
+├── templates/
+│   └── index.html           # Antarmuka web modern (Tailwind CSS, FontAwesome, Audio Player)
 ├── static/
-│   └── app.js               # Logika frontend, audio player, batch selection & AJAX
-└── templates/
-    └── index.html           # Tampilan antarmuka web responsif
+│   ├── app.js               # Logika frontend, audio player, batch selection, dialog playlist & AJAX
+│   ├── style.css            # Custom CSS styling Web Studio
+│   ├── favicon.ico          # Favicon tab browser
+│   ├── favicon.png          # Favicon resolusi tinggi
+│   └── extension/           # Mirror asset ekstensi yang disajikan oleh web server
+└── extension/               # Source code Ekstensi Browser & Userscript
+    ├── manifest.json        # Manifest V3 browser extension
+    ├── background.js        # Background worker service
+    ├── content.js           # In-page script YouTube & dialog konfirmasi playlist
+    ├── content.css          # In-page styling tombol unduh & equalizer panel
+    ├── popup.html           # Popup window ekstensi dengan 6-band graphic equalizer vertikal
+    ├── popup.js             # Logika interaksi popup ekstensi
+    ├── youtube-to-mp3-studio.user.js  # Tampermonkey userscript terintegrasi
+    └── icons/               # Ikon ekstensi (16x16, 48x48, 128x128)
 ```
 
 ---
 
-## ⚙️ Konfigurasi Lingkungan (Environment Variables)
+## ⚙️ Konfigurasi Environment Variables
 
-Aplikasi mendukung konfigurasi melalui environment variable yang dapat disesuaikan pada `docker-compose.yml`:
+Konfigurasi dapat disesuaikan pada file `docker-compose.yml`:
 
 | Variabel | Default | Keterangan |
 | :--- | :--- | :--- |
-| `DOWNLOAD_DIR` | `./downloads` | Path folder tempat file MP3 disimpan |
-| `URLS_FILE` | `./urls.txt` | Path file daftar URL yang dikelola server |
+| `DOWNLOAD_DIR` | `./downloads` | Path folder tempat file hasil unduhan MP3 disimpan |
+| `URLS_FILE` | `./urls.txt` | Path file daftar URL yang dikelola oleh server |
+| `PORT` | `5000` | Port HTTP tempat server Flask berjalan |
 
 ---
 
 ## 📡 Dokumentasi REST API
 
-Aplikasi menyediakan berbagai endpoint API yang dapat diintegrasikan dengan aplikasi lain:
+Aplikasi menyediakan REST API yang dapat digunakan untuk integrasi sistem lain:
 
-### 🎯 Unduhan & Tugas
-- `POST /api/info`
-  - **Body**: `{"url": "https://youtu.be/..."}`
-  - Mengambil preview judul, durasi, channel, dan thumbnail YouTube.
-- `POST /api/download`
-  - **Body**: `{"urls": ["..."], "quality": "320"}`
-  - Menambahkan satu atau banyak lagu ke antrean unduhan.
-- `GET /api/tasks`
-  - Mendapatkan daftar status antrean unduhan saat ini.
-- `POST /api/tasks/clear`
-  - Membersihkan riwayat antrean yang sudah selesai atau error.
+### 🎯 Unduhan & Antrean (Queue)
+- **`GET /api/info?url=<URL>`**
+  - Mengambil info metadata video/playlist (judul, durasi, channel, thumbnail, status playlist).
+- **`POST /api/download`**
+  - Menambahkan URL ke antrean unduhan.
+  - **Body JSON**:
+    ```json
+    {
+      "urls": ["https://www.youtube.com/watch?v=..."],
+      "quality": "320",
+      "no_playlist": true
+    }
+    ```
+- **`GET /api/tasks`**
+  - Mengambil status seluruh antrean unduhan realtime (progress %, speed, ETA, status).
+- **`POST /api/tasks/clear`**
+  - Menghapus riwayat antrean yang sudah selesai atau berstatus error.
 
-### 🎵 Koleksi Lagu & File
-- `GET /api/files`
-  - Menampilkan seluruh file MP3 hasil unduhan beserta ukuran dan waktu pembuatan.
-- `GET /api/files/<filename>/stream`
+### 🎵 Koleksi File & Streaming Musik
+- **`GET /api/files`**
+  - Menampilkan seluruh file MP3 di folder downloads beserta ukuran dan waktu pembuatan.
+- **`GET /api/files/<filename>/stream`**
   - Streaming audio MP3 langsung untuk pemutar musik web.
-- `GET /api/files/<filename>/download`
-  - Mengunduh file MP3 satuan ke perangkat pengguna.
-- `GET/POST /api/files/download-zip`
-  - Mengunduh koleksi MP3 dalam satu file arsip `.zip`.
-  - Mendukung unduhan seluruh file (tanpa parameter) atau hanya file terpilih (`POST` dengan body `{"filenames": [...]}` atau `GET` dengan query `?files=lagu1.mp3,lagu2.mp3`).
-- `DELETE /api/files/<filename>`
-  - Menghapus satu file MP3 dari server.
-- `POST /api/files/batch-delete`
-  - **Body**: `{"filenames": ["lagu1.mp3", "lagu2.mp3"]}`
-  - Menghapus beberapa file terpilih sekaligus secara aman.
+- **`GET /api/files/<filename>/download`**
+  - Mengunduh file MP3 satuan ke komputer/HP.
+- **`GET /api/files/download-zip`**
+  - Mengunduh seluruh koleksi lagu dalam 1 file arsip `.zip`.
+- **`POST /api/files/download-zip`**
+  - Mengunduh beberapa file lagu terpilih dalam format `.zip`.
+  - **Body JSON**: `{"filenames": ["lagu1.mp3", "lagu2.mp3"]}`
+- **`DELETE /api/files/<filename>`**
+  - Menghapus 1 file lagu dari server.
+- **`POST /api/files/batch-delete`**
+  - Menghapus beberapa file terpilih sekaligus secara massal.
+  - **Body JSON**: `{"filenames": ["lagu1.mp3", "lagu2.mp3"]}`
 
 ### 📝 Manajemen `urls.txt`
-- `GET /api/urls-txt`
-  - Mengambil isi file `urls.txt` di server.
-- `POST /api/urls-txt`
-  - **Body**: `{"content": "..."}`
-  - Memperbarui isi file `urls.txt` di server.
+- **`GET /api/urls-txt`**
+  - Mengambil isi teks dari file `urls.txt`.
+- **`POST /api/urls-txt`**
+  - Memperbarui isi teks file `urls.txt`.
+  - **Body JSON**: `{"content": "https://..."}`
+
+### 🧩 Ekstensi & Utilitas
+- **`GET /api/extension/download-zip`**
+  - Mengunduh paket ekstensi browser siap pasang dalam format `.zip`.
+- **`GET /extension/youtube-to-mp3-studio.user.js`**
+  - Endpoint instalasi langsung untuk Tampermonkey/Violentmonkey userscript.
+- **`GET /favicon.ico`**
+  - Menyajikan favicon logo studio untuk tab browser.
 
 ---
 
 ## 🛡️ Catatan & Lisensi
-- Proyek ini ditujukan untuk penggunaan pribadi dan edukasi.
-- Harap perhatikan hak cipta konten dan ketentuan layanan dari platform sumber audio.
+- Proyek ini dibuat untuk tujuan edukasi dan penggunaan personal.
+- Mohon gunakan secara bijak dengan memperhatikan hak cipta konten dan kebijakan dari platform penyedia media.
